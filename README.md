@@ -514,7 +514,7 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 
 In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt NLIP can benefit from a security enhanced architecture that supports customized, pluggable controls. As illustrated in the picture below, such an architecture favors at least three general places (a.k.a. hooking points or reference monitors) where one can add customized control functions and even security policies adapted to your applications/deployments/enterprises. These reference monitors (RM) can enforce policies and controls on the messages between (1) agents and clients/users (RM-1); (2) agents and agents (RM-2); (3) agents and environments (RM-3), e.g., third-party/external tools and AI models). 
 
-
+![Reference Agent Architecture](figures/NLIPWithReferenceMonitors.png)
 
 
 These controls can help defeat advanced, evolving threats directly against modern agent related techniques.
