@@ -520,10 +520,22 @@ As illustrated in the picture above, such an architecture outlines a set of gene
 
 These controls can help defeat advanced threats against agent systems and related techniques. An initial list of advanced threats that one can defeat by plugging controls in these RMs (Type-1 to Type-3) are summarized in the table below. 
 
+A circle means that the threat can be defeated in the RM.
+
+| Threat                         | Type-1 RM<br />(Agent to client) | Type-2 RM<br />(Agent to agent) | Type-3 RM<br />(Agent to environment) |
+| :----------------------------- | :------------------------------: | :-----------------------------: | :-----------------------------------: |
+| Prompt Injection               |            $\bigcirc$            |                -                |                   -                   |
+| Indirect Prompt Injection      |                -                 |           $\bigcirc$            |              $\bigcirc$               |
+| Sensitive Data Disclosure      |            $\bigcirc$            |           $\bigcirc$            |              $\bigcirc$               |
+| Jailbreak Attack               |            $\bigcirc$            |           $\bigcirc$            |              $\bigcirc$               |
+| Malicious Reply                |                -                 |           $\bigcirc$            |                   -                   |
+| Supply-Chain Poisoning         |                -                 |                -                |              $\bigcirc$               |
+| Model Extraction and Inversion |                -                 |                -                |              $\bigcirc$               |
+| MINJA/Memory Injection Attack        |                -                 |                -                |              $\bigcirc$               |
 
 
 
- 
+
 
 ## 8  Future Enhancements
 
@@ -545,6 +557,8 @@ These controls can help defeat advanced threats against agent systems and relate
 | HSM               | Tamper-resistant device for cryptographic keys.                            |
 | MINJA             | Memory Injection Attack; poisoning of vector memory.                       |
 | Prompt injection  | Exploit manipulating LM prompts to alter behavior.                         |
+| Indirect Prompt injection  | Attack where malicious instructions are embedded in external content that the LM processes, causing unintended behavior.                         |
+| Jailbreak Attack | Exploit using carefully crafted prompts to bypass an LM's safety guardrails and content policies.                         |
 | SBOM              | Software Bill of Materials.                                                |
 | Token exchange    | OAuth flow trading one token for a scoped token.                           |
 | TLS 1.3           | Current TLS version with forward secrecy.                                  |
