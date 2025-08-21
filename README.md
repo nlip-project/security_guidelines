@@ -467,11 +467,6 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 
 ---
 
-## 6. Reference Architecture of Pluggable/Customizable Control 
-
-In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt can benefit from an security enhanced architecture that supports customized, pluggable controls. These controls can help defeat advanced, evolving threats directly against modern agent related techniques.
-
-
 
 ## 6  Framework Mapping Appendix
 
@@ -515,7 +510,12 @@ In contrast to MVCS that addresses a baseline set of essential controls, deploym
 
 ---
 
-## 7  Future Enhancements
+## 7. Reference Architecture of Pluggable, Customizable Control 
+
+In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt can benefit from an security enhanced architecture that supports customized, pluggable controls. These controls can help defeat advanced, evolving threats directly against modern agent related techniques.
+
+
+## 8  Future Enhancements
 
 - Dedicated “Deployment” section in the guidelines, with clear, actionable recommendations for securing NLIP in a typical enterprise rollout.
 - Map NLIP’s security layers onto real-world system components, with help for implementers to understand their existing infrastructures (e.g., service mesh, API gateway, container clusters) each security control belongs.
@@ -523,7 +523,7 @@ In contrast to MVCS that addresses a baseline set of essential controls, deploym
 
 ---
 
-## 8  Glossary
+## 9  Glossary
 
 | Term              | Definition                                                                 |
 |-------------------|----------------------------------------------------------------------------|
