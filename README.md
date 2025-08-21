@@ -440,6 +440,10 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 
 ---
 
+## 6. Reference Architecture of Pluggable/Customizable Control 
+
+In contrast to MVCS that addresses a baseline set of essential controls, below is a 
+
 ## 6  Framework Mapping Appendix
 
 ### 6.1 MITRE ATLAS Mapping (excerpt)
