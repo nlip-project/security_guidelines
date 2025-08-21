@@ -516,7 +516,9 @@ In contrast to MVCS that addresses a baseline set of essential controls, deploym
 
 ![Reference Agent Architecture](figures/NLIPWithReferenceMonitors.png)
 
-As illustrated in the picture above, such an architecture outlines a set of generalized places (a.k.a. hooking points or reference monitors) where one can add customized control functions and even security policies adapted to your applications/deployments/enterprises. These reference monitors (RM) can enforce policies and controls on the NLIP messages between (1) agents and clients (Type-1 RM); (2) agents and agents (Type-2 RM). Additionally, this architecture favors reference monitors between (3) agents and environments (Type-3 RM), enabling one to perform control on messages between agent and third-party/external tools, and betweena agent and AI models. These controls can help defeat advanced, evolving threats directly against modern agent related techniques. An initial list of advanced threats that we can defeat by plugging controls in these RMs are summarized in the table below. 
+As illustrated in the picture above, such an architecture outlines a set of generalized places (a.k.a. hooking points or reference monitors) where one can add customized control functions and even security policies adapted to your applications/deployments/enterprises. These reference monitors (RM) can enforce policies and controls on the NLIP messages between (1) agents and clients (Type-1 RM); (2) agents and agents (Type-2 RM). Additionally, this architecture favors reference monitors between (3) agents and environments (Type-3 RM), enabling one to perform control on messages between agent and third-party/external tools, and betweena agent and AI models. 
+
+These controls can help defeat advanced threats against agent systems and related techniques. An initial list of advanced threats that we can defeat by plugging controls in these RMs are summarized in the table below. 
 
 
 
