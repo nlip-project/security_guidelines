@@ -512,12 +512,11 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 
 ## 7. Reference Architecture of Pluggable, Customizable Control 
 
-In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt NLIP can benefit from a security enhanced architecture that supports customized, pluggable controls. As illustrated in the picture below, such an architecture favors at least three general places (a.k.a. hooking points or reference monitors) where one can add customized control functions and even security policies adapted to your applications/deployments/enterprises. These reference monitors (RM) can enforce policies and controls on the messages between (1) agents and clients/users (RM-1); (2) agents and agents (RM-2); (3) agents and environments (RM-3), e.g., third-party/external tools and AI models). 
+In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt NLIP can benefit from a security enhanced architecture that supports customized, pluggable controls. 
 
 ![Reference Agent Architecture](figures/NLIPWithReferenceMonitors.png)
 
-
-These controls can help defeat advanced, evolving threats directly against modern agent related techniques.
+As illustrated in the picture above, such an architecture outlines a set of generalized places (a.k.a. hooking points or reference monitors) where one can add customized control functions and even security policies adapted to your applications/deployments/enterprises. These reference monitors (RM) can enforce policies and controls on the NLIP messages between (1) agents and clients (Type-1 RM); (2) agents and agents (Type-2 RM). Additionally, this architecture favors reference monitors between (3) agents and environments (Type-3 RM), enabling one to perform control on messages between agent and third-party/external tools, and betweena agent and AI models. These controls can help defeat advanced, evolving threats directly against modern agent related techniques. An initial list of advanced threats that we can defeat by plugging controls in these RMs are summarized in the table below. 
 
 
 
