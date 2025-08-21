@@ -520,10 +520,20 @@ As illustrated in the picture above, such an architecture outlines a set of gene
 
 These controls can help defeat advanced threats against agent systems and related techniques. An initial list of advanced threats that one can defeat by plugging controls in these RMs (Type-1 to Type-3) are summarized in the table below. 
 
+| Threat                         | Type-1 RM<br />(Agent to client) | Type-2 RM<br />(Agent to agent) | Type-3 RM<br />(Agent to environment) |
+| :----------------------------- | :------------------------------: | :-----------------------------: | :-----------------------------------: |
+| Prompt Injection               |            $\bigcirc$            |                -                |                   -                   |
+| Indirect Prompt Injection      |                -                 |           $\bigcirc$            |              $\bigcirc$               |
+| Sensitive Data Disclosure      |            $\bigcirc$            |           $\bigcirc$            |              $\bigcirc$               |
+| Jailbreak Attack               |            $\bigcirc$            |           $\bigcirc$            |              $\bigcirc$               |
+| Malicious Reply                |                -                 |           $\bigcirc$            |                   -                   |
+| Supply-Chain Poisoning         |                -                 |                -                |              $\bigcirc$               |
+| Model Extraction and Inversion |                -                 |                -                |              $\bigcirc$               |
+| Memory Injection Attack        |                -                 |                -                |              $\bigcirc$               |
 
 
 
- 
+
 
 ## 8  Future Enhancements
 
