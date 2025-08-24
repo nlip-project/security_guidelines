@@ -511,7 +511,7 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 
 ## 8  Deployment Considerations
 
-NLIP can be deployed in environments where data is not publicly accessible.  
+NLIP can be deployed in environments where data is not publicly accessible. 
 This allows for agents to provide value from knowledge gained from proprietary 
 business-critical data, without exposing such data (where such exposure may be 
 restricted for legal, regulatory or commercial purposes).  This can be achieved 
@@ -520,6 +520,16 @@ environments, indirect routing of the NLIP messages using the AMQP binding, as
 shown in the diagram.
 
 ![Indirect message routing through dual-DMZ](figures/dual-dmz.png)
+
+The above diagram illustrates situations in highly-regulated enterprises. There 
+is a firewall protecting the internal private cloud network on the left, and a 
+_separate_ firewall guarding inbound traffic from Internet-connected public 
+cloud sources on the right.  Because these are not handled by the same 
+firewall, it is difficult for application traffic to navigate through this 
+environment.  Firewall administrators would have to coordinate not only access 
+ports, but internal ports between the firewalls for each application.  With an 
+NLIP processor using indirect routing, this can be managed securely without the 
+need to open up ports.
 
 Other considerations include:
 
