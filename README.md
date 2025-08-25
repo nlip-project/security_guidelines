@@ -558,6 +558,11 @@ diagram.
 
 ![Agentic Cross-Domain ZTNA](figures/ztna.png)
 
+In this diagram, secure connections are only made outbound from operational 
+systems into a secure DMZ.  No ports need to be opened on the operational 
+(private, public or IoT systems).  However, logically it will appear at the 
+protocol layer as one connection, so the application need not have additional 
+logic to deal with this.
 
 ## 9  Future Enhancements
 
