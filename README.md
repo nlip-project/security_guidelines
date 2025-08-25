@@ -509,7 +509,57 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 
 ---
 
-## 7  Future Enhancements
+## 8  Deployment Considerations
+
+NLIP can be deployed in environments where data is not publicly accessible. 
+This allows for agents to provide value from knowledge gained from proprietary 
+business-critical data, without exposing such data (where such exposure may be 
+restricted for legal, regulatory or commercial purposes).  This can be achieved 
+by either deploying a proxy (for a single DMZ), or, for more highly secure 
+environments, indirect routing of the NLIP messages using the AMQP binding, as 
+shown in the diagram.
+
+![Indirect message routing through dual-DMZ](figures/dual-dmz.png)
+
+The above diagram illustrates situations in highly-regulated enterprises. There 
+is a firewall protecting the internal private cloud network on the left, and a 
+_separate_ firewall guarding inbound traffic from Internet-connected public 
+cloud sources on the right.  Because these are not handled by the same 
+firewall, it is difficult for application traffic to navigate through this 
+environment.  Firewall administrators would have to coordinate not only access 
+ports, but internal ports between the firewalls for each application.  With an 
+NLIP processor using indirect routing, this can be managed securely without the 
+need to open up ports.
+
+Other considerations include:
+
+- **Certificate Authority**: The Certificate Authority should be customizable 
+  so that the owner of the data can be the CA, if desired.  This allows for 
+  full access monitoring.
+- **Redirection**: For purposes of filtering and data-loss prevention, it 
+  should be possible to redirect responses to a filtering entity, which can 
+  ensure that policies on data exfiltration are applied (such as PII 
+  filtering).
+- **Service Registration**: Service registration should be kept localized, so 
+  that enterprise-wide namespaces are not flooded with DNS names.
+- **Agent Signing**: While it is not a function of NLIP per se, the 
+  message/sub-message system in NLIP can be used in the coding of an agent to 
+  present a code signature, to authenticate the agent, and prevent fraudulent 
+  ones from masquerading as real ones.
+
+### Zero-Trust option
+
+To build this into a Zero-Trust environment (useful in IoT or other critical 
+environments) it is possible to reduce the port exposure to zero with the AMQP 
+binding, By ensuring all connectivity is via inbound connections to the DMZ 
+(i.e. have one of them in reverse-connect mode) and then use the indirect 
+routing feature mentioned earlier.  This is illustrated in the following 
+diagram.
+
+![Agentic Cross-Domain ZTNA](figures/ztna.png)
+
+
+## 9  Future Enhancements
 
 - Dedicated “Deployment” section in the guidelines, with clear, actionable recommendations for securing NLIP in a typical enterprise rollout.
 - Map NLIP’s security layers onto real-world system components, with help for implementers to understand their existing infrastructures (e.g., service mesh, API gateway, container clusters) each security control belongs.
@@ -567,6 +617,7 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 15. **RFC 9449 – Demonstrating Proof-of-Possession (DPoP)**
 16. **RFC 9700 – OAuth 2.0 Security BCP**
 17. **RFC 8705 – OAuth 2.0 Mutual-TLS Tokens**
+18. ISO/IEC 19464: Information technology — Advanced Message Queuing Protocol (AMQP) v1.0 specification
 
 ---
 
