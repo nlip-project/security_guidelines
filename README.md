@@ -34,21 +34,21 @@ Section 3 outlines a curated set of **external threats** that already exist in a
 
 | Threat Category       | Likelihood | Impact | Overall Risk | Control Owner |
 |-----------------------|------------|--------|--------------|---------------|
-| Prompt Injection      | 4          | 5      | High 🔴      | AppSec       |
-| Supply-Chain Poisoning| 4          | 4      | High 🔴      | SRE          |
-| Confused-Deputy       | 3          | 5      | High 🔴      | AppSec       |
-| Inference Flooding    | 4          | 3      | Medium 🟠    | SRE          |
-| Session Hijack        | 3          | 4      | Medium 🟠    | AppSec       |
-| MINJA                 | 3          | 4      | Medium 🟠    | ML Eng       |
-| Model Extraction      | 2          | 5      | Medium 🟠    | ML Eng       |
-| Data-at-Rest Exposure | 3          | 4      | Medium 🟠    | SRE          |
-| CoT Leakage           | 2          | 4      | Low 🟢       | AppSec       |
-| Hallucination Fraud   | 3          | 5      | High 🔴      | ML Eng       |
-| Data Governance       | 4          | 5      | High 🔴      | Compliance   |
-| Multi-Tenancy         | 3          | 4      | Medium 🟠    | SRE          |
-| Advanced Adversarial  | 3          | 4      | Medium 🟠    | ML Eng       |
-| Malicious reply       | 3          | 4      | Medium 🟠    | AppSec       |
-| Human Factors         | 4          | 3      | Medium 🟠    | AppSec       |
+| 3.1 Prompt Injection      | 4          | 5      | High 🔴      | AppSec       |
+| 3.2 Supply-Chain Poisoning| 4          | 4      | High 🔴      | SRE          |
+| 3.3 Confused-Deputy       | 3          | 5      | High 🔴      | AppSec       |
+| 3.4 Inference Flooding    | 4          | 3      | Medium 🟠    | SRE          |
+| 3.5 Session Hijack        | 3          | 4      | Medium 🟠    | AppSec       |
+| 3.6 MINJA                 | 3          | 4      | Medium 🟠    | ML Eng       |
+| 3.7 Model Extraction      | 2          | 5      | Medium 🟠    | ML Eng       |
+| 3.8 Data-at-Rest Exposure | 3          | 4      | Medium 🟠    | SRE          |
+| 3.9 CoT Leakage           | 2          | 4      | Low 🟢       | AppSec       |
+| 3.10 Hallucination-Driven Fraud   | 3          | 5      | High 🔴      | ML Eng       |
+| 3.11 Data Governance       | 4          | 5      | High 🔴      | Compliance   |
+| 3.12 Multi-Tenancy         | 3          | 4      | Medium 🟠    | SRE          |
+| 3.13 Advanced Adversarial  | 3          | 4      | Medium 🟠    | ML Eng       |
+| 3.14 Malicious reply       | 3          | 4      | Medium 🟠    | AppSec       |
+| 3.15 Human Factors         | 4          | 3      | Medium 🟠    | AppSec       |
 
 Each threat profile contains:
 
@@ -94,7 +94,8 @@ Each threat profile contains:
 - Isolate third-party tools in a seccomp-restricted or gVisor sandbox.
 - Incorporate CISA AI Data Security Guidance (May 2025): data encryption, digital signatures, provenance tracking, secure multi-party computation. Vet open-source models via Hugging Face safety checks. Regularly assess dependencies for vulnerabilities.
 - Specify HSM-backed signing for key custody, rotation every 90 days, and conduct compromise drills.
-- Critical CVE patch ≤ 7 days, “medium ≤ 30 days, low ≤ 90 days” (clock starts at CVE publication or vendor advisory—whichever first).
+- Critical CVE patch ≤ 7 days, medium ≤ 30 days, low ≤ 90 days (clock starts at CVE publication or vendor advisory—whichever first).
+- Include AI vendor assessments in CI/CD and procurement processes: conduct security posture reviews, require contractual security policies, enforce breach-notification terms, and monitor supplier compliance continuously.
 
 ### 3.3 Confused-Deputy / Token Passthrough
 
@@ -111,7 +112,7 @@ Each threat profile contains:
 - Validate proof-of-possession (DPoP or mTLS-bound tokens). These tokens require the client to prove it possesses a private key or certificate, making it harder for attackers to reuse stolen tokens.
 - Strip Authorization headers across trust boundaries (e.g. public to internal domain); remove existing auth headers and regenerate auth context. This prevents token leakage
 - Alert on privilege-escalation patterns (role mismatch, scope widening).
-- Mandate token binding per RFC 8471 for all flows to defend againt token passthrough.
+- Mandate token binding per RFC 8471 for all flows to defend against token passthrough.
 
 ### 3.4 Unauthenticated Inference Flooding (Cost-Amplification DoS)
 
@@ -245,8 +246,9 @@ Each threat profile contains:
 - Enforce encryption at rest (AES-256) and in transit (TLS 1.3). 
 - Apply data-residency controls per jurisdiction.
 - Use differential privacy or redaction for analytics endpoints. This protects individual identities while enabling aggregate insights.
-- Align with EU AI Act (GPAI obligations effective 2 Aug 2025; systemic risks 2 Aug 2025). Reference Code of Practice (July 10, 2025) and guidelines for providers (July 18, 2025). Include bias detection and explainability for ethical compliance.
+- Align with EU AI Act (GPAI obligations effective 2 Aug 2025; systemic risks 2 Aug 2025). Reference Code of Practice (10 Jul 2025) and guidelines for providers (18 Jul 2025). Include bias detection and explainability for ethical compliance.
 - Reference geo-fencing at storage-layer (e.g., S3 block-public, region-block). For Azure/GCP analogues: Use Azure Blob immutability policies or GCP Bucket Lock for multi-cloud parity.
+- Breach notification: Controllers MUST notify within 72h; processors MUST notify controllers without undue delay.
 
 | Control                           | GDPR Article | CCPA Section | HIPAA Section                        |
 | --------------------------------- | ------------ | ------------ | ------------------------------------ |
@@ -338,11 +340,11 @@ In multi-agent systems, one agent may send a reply that contains malicious instr
 
 | ID | Control Statement | Priority |
 |----|-------------------|----------|
-| **ID-1** | **MUST** enforce **PKCE (S256)** on all OAuth authorisation-code flows, including confidential clients. | P0 |
+| **ID-1** | **MUST** enforce **PKCE (S256)** on all OAuth authorization-code flows, including confidential clients. | P0 |
 | **ID-2** | **MUST** use **JAR (RFC 9101)** *or* **PAR (RFC 9126)**; raw query-parameter requests **MUST NOT** be accepted. | P0 |
 | **ID-3** | If a static client ID is unavoidable, the proxy **MUST** re-prompt for consent or bind the request via JAR/PAR. | P0 |
 | **ID-4** | **MUST** validate `aud` == self **AND** an `azp` claim for delegated flows; reject otherwise. | P0 |
-| **ID-5** | **MUST** issue **sender-constrained** tokens via **DPoP (RFC 9449)** or **mTLS (RFC 8705)** in production. Applies to service-to-service refresh flows. | P0 |
+| **ID-5** | **MUST** issue **sender-constrained** tokens via **DPoP (RFC 9449)** or **mTLS (RFC 8705)** in production. Applies to both interactive and service-to-service flows. | P0 |
 | **ID-6** | Refresh tokens **MUST** employ rotate-and-revoke on every redemption. | P0 |
 | **ID-7** | Bearer-token lifetime ≤ 10 min; longer-lived tokens **MUST** be sender-constrained. | P0 |
 | **ID-8** | Session IDs **MUST NOT** be used for authn; use stateless JWT/opaque refs bound by ID-4/ID-5. | P0 |
@@ -412,6 +414,7 @@ In multi-agent systems, one agent may send a reply that contains malicious instr
 - Immutable evidence storage; PII redaction per jurisdiction.
 - Extend CACAO to push revocation events into Okta/AAD and cloud-WAF ACLs automatically.
 - Record triage SLA for prompt-injection incidents: containment < 15 min; full remediation < 4 h.
+- Conduct regular cross-functional tabletop exercises (involving legal, compliance, SRE, communications) to simulate incident scenarios, validate CACAO playbooks, and refine incident runbooks before live deployment.
 
 ### 4.8 AI Agent Lifecycle Management
 
@@ -428,7 +431,7 @@ sequenceDiagram
     participant AS as 3P Authz Server
 
     Note over C,P: Legit PAR + PKCE + DPoP flow
-    C->>P: Authorisation request (client meta)
+    C->>P: Authorization request (client meta)
     P->>AS: PAR { client_id=P, client_meta }
     AS-->>P: request_uri (signed)
     P-->>C: 302 AS?request_uri
@@ -506,7 +509,7 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 |---------------------|----------------------------------|
 | Art. 9 (Risk Management) | Risk scoring in Section 3    |
 | Art. 28 (GPAI Obligations) | 3.11 governance, Code of Practice |
-| Art. 52 (Systemic Risks) | 3.2 supply-chain, guidelines July 2025 |
+| Art. 52 (Systemic Risks) | 3.2 supply-chain, guidelines 18 July 2025 |
 
 ---
 
@@ -516,7 +519,7 @@ NLIP can be deployed in environments where data is not publicly accessible. This
 
 ![Diagram: Indirect message routing through dual-DMZ](figures/dual-dmz.png)
 
-The above diagram illustrates situations in highly regulated enterprises. There is a firewall protecting the internal private cloud network on the left, and a _separate_ firewall guarding inbound traffic from Internet-connected public cloud sources on the right. Because these are not handled by the same firewall, it is difficult for application traffic to navigate through this environment. Firewall administrators would have to coordinate not only access ports, but internal ports between the firewalls for each application. With an NLIP processor using indirect routing, this can be managed securely without the need to open up ports.
+The above diagram illustrates situations in highly regulated enterprises. There is a firewall protecting the internal private cloud network on the left, and a separate firewall guarding inbound traffic from Internet-connected public cloud sources on the right. Because these are not handled by the same firewall, it is difficult for application traffic to navigate through this environment. Firewall administrators would have to coordinate not only access ports, but internal ports between the firewalls for each application. With an NLIP processor using indirect routing, this can be managed securely without the need to open up ports.
 
 Other considerations include:
 
@@ -543,33 +546,35 @@ To build this into a Zero-Trust environment (useful in IoT or other critical env
 
 | Term                   | Definition                                                                                       |
 |------------------------|--------------------------------------------------------------------------------------------------|
-| CACAO playbook         | JSON-based incident-response workflow spec (OASIS).                                              |
-| Chain-of-thought (CoT) | Intermediate reasoning tokens that may expose logic or PII.                                      |
-| COSE_Sign1             | CBOR Object Signing and Encryption single-signature envelope.                                    |
-| Confused-deputy        | Authentication flaw where a legitimate agent misuses its authority.                              |
-| Differential privacy   | Technique adding statistical noise to outputs.                                                   |
-| HSM                    | Tamper-resistant device for cryptographic keys.                                                  |
-| MINJA                  | Memory Injection Attack; poisoning of vector memory.                                             |
-| Prompt injection       | Exploit manipulating LM prompts to alter behavior.                                               |
-| Indirect prompt injection | Attack where malicious instructions are embedded in external content that the LM processes, causing unintended behavior. |
-| Jailbreak attack       | Exploit using carefully crafted prompts to bypass an LM's safety guardrails and content policies. |
-| SBOM                   | Software Bill of Materials.                                                                      |
-| Token exchange         | OAuth flow trading one token for a scoped token.                                                 |
-| TLS 1.3                | Current TLS version with forward secrecy.                                                        |
-| TPM quote              | Signed PCR measurements attesting boot state.                                                    |
-| Zero-trust             | Model eliminating implicit trust; each request is checked.                                       |
-| PQC                    | Post-Quantum Cryptography; algorithms resistant to quantum attacks.                              |
-| EU AI Act              | EU regulation on AI, effective 2025 for high-risk systems.                                       |
-| DPoP                   | OAuth proof-of-possession JWT bound to TLS connection.                                           |
-| OpenTelemetry          | CNCF observability framework for traces & metrics.                                               |
-| PKCE                   | Proof Key for Code Exchange; a security extension for OAuth authorization code flows.            |
-| JAR                    | JWT-Secured Authorization Request; a method to secure OAuth requests using JWTs.                 |
-| PAR                    | Pushed Authorization Requests; a technique to push OAuth parameters to the server.               |
-| azp                    | Authorized party claim in JWTs for delegated flows.                                              |
-| JTI                    | JWT ID; unique identifier for tokens to prevent replay.                                          |
-| ML-DSA                 | Module Lattice Digital Signature Algorithm; a post-quantum signature scheme.                     |
-| RAG                    | Retrieval-Augmented Generation; a technique to improve factuality in LLMs.                       |
+| **azp**                | Authorized party claim in JWTs for delegated flows.                                              |
+| **CACAO playbook**     | JSON-based incident-response workflow spec (OASIS).                                              |
+| **Chain-of-thought (CoT)** | Intermediate reasoning tokens that may expose logic or PII.                                  |
+| **Confused-Deputy**    | Authentication flaw where a legitimate agent misuses its authority.                              |
+| **COSE_Sign1**         | CBOR Object Signing and Encryption single-signature envelope.                                    |
+| **Differential privacy** | Technique adding statistical noise to outputs.                                                 |
+| **DPoP**               | OAuth proof-of-possession JWT bound to TLS connection.                                           |
+| **EU AI Act**          | EU regulation on AI, effective 2025 for high-risk systems.                                       |
+| **HQC**                | Hamming Quasi-Cyclic: Code-based post-quantum encryption scheme, selected by NIST in 2025 for backup standardization. |
+| **HSM**                | Tamper-resistant device for cryptographic keys.                                                  |
+| **Indirect prompt injection** | Attack where malicious instructions are embedded in external content that the LM processes, causing unintended behavior. |
+| **JAR**                | JWT-Secured Authorization Request; a method to secure OAuth requests using JWTs.                 |
+| **Jailbreak attack**   | Exploit using carefully crafted prompts to bypass an LM's safety guardrails and content policies. |
+| **JTI**                | JWT ID; unique identifier for tokens to prevent replay.                                          |
+| **MINJA**              | Memory Injection Attack; poisoning of vector memory.                                             |
+| **ML-DSA**             | Module Lattice Digital Signature Algorithm; a post-quantum signature scheme.                     |
+| **OpenTelemetry**      | CNCF observability framework for traces & metrics.                                               |
+| **PAR**                | Pushed Authorization Requests; a technique to push OAuth parameters to the server.               |
+| **PKCE**               | Proof Key for Code Exchange; a security extension for OAuth authorization code flows.            |
+| **PQC**                | Post-Quantum Cryptography; algorithms resistant to quantum attacks.                              |
+| **Prompt injection**   | Exploit manipulating LM prompts to alter behavior.                                               |
+| **RAG**                | Retrieval-Augmented Generation; a technique to improve factuality in LLMs.                       |
+| **SBOM**               | Software Bill of Materials.                                                                      |
+| **TLS 1.3**            | Current TLS version with forward secrecy.                                                        |
+| **Token exchange**     | OAuth flow trading one token for a scoped token.                                                 |
+| **TPM quote**          | Signed PCR measurements attesting boot state.                                                    |
+| **Zero-Trust**         | Model eliminating implicit trust; each request is checked.                                       |
 
+---
 
 ## 10  Normative References (additions highlighted)
 
@@ -581,12 +586,14 @@ To build this into a Zero-Trust environment (useful in IoT or other critical env
 6. NIST Cybersecurity Framework 2.0 (draft)
 7. ISO/IEC 27002:2022
 8. EU AI Act Code of Practice (10 Jul 2025)
-9. NIST Post-Quantum Cryptography Standards (HQC, Mar 2025)
+9. NIST Post-Quantum Cryptography Standards:
+   - **FIPS 203–205** finalized 13 Aug 2024.
+   - **HQC** selected 11 Mar 2025, draft ~2026, final ~2027.
 10. CISA AI Data Security Guidance (22 May 2025)
 11. NIST AI Risk Management Framework 1.0 (2023)
 12. **RFC 7636 – Proof Key for Code Exchange (PKCE)**
-13. **RFC 9101 – JWT-Secured Authorisation Request (JAR)**
-14. **RFC 9126 – Pushed Authorisation Requests (PAR)**
+13. **RFC 9101 – JWT-Secured Authorization Request (JAR)**
+14. **RFC 9126 – Pushed Authorization Requests (PAR)**
 15. **RFC 9449 – Demonstrating Proof-of-Possession (DPoP)**
 16. **RFC 9700 – OAuth 2.0 Security BCP**
 17. **RFC 8705 – OAuth 2.0 Mutual-TLS Tokens**
