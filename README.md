@@ -150,6 +150,7 @@ Each threat profile contains:
 - Add biometric re-auth for high-privilege sessions, adding a second layer of identity verification.
 - For queue-poisoning: Require per-event MAC tied to jti + user-ID; enforce origin-server binding.
 - Specify nonce/JTI validity (e.g., 5 minutes) and require queue-level AES-GCM encryption.
+- If NLIP deployments use an in-band conversation token (e.g., in submessages), it MUST be treated as a session credential equivalent to HTTP cookies or OAuth tokens. Such tokens MUST NOT be shared with the Agent LLM or exposed in application-level payloads. Enforce standard session-handling protections (short lifetime, rotate on privilege escalation, bind to client identity, proof-of-possession).
 
 ### 3.6 Memory Injection Attack (MINJA)
 
@@ -336,93 +337,122 @@ In multi-agent systems, one agent may send a reply that contains malicious instr
 
 ## 4  Minimal Viable Control Set (MVCS)
 
-### 4.1 Identity & Authentication **(expanded)**
+### 4.1 Identity & Authentication (Expanded Controls)
 
-| ID | Control Statement | Priority |
-|----|-------------------|----------|
-| **ID-1** | **MUST** enforce **PKCE (S256)** on all OAuth authorization-code flows, including confidential clients. | P0 |
-| **ID-2** | **MUST** use **JAR (RFC 9101)** *or* **PAR (RFC 9126)**; raw query-parameter requests **MUST NOT** be accepted. | P0 |
-| **ID-3** | If a static client ID is unavoidable, the proxy **MUST** re-prompt for consent or bind the request via JAR/PAR. | P0 |
-| **ID-4** | **MUST** validate `aud` == self **AND** an `azp` claim for delegated flows; reject otherwise. | P0 |
-| **ID-5** | **MUST** issue **sender-constrained** tokens via **DPoP (RFC 9449)** or **mTLS (RFC 8705)** in production. Applies to both interactive and service-to-service flows. | P0 |
-| **ID-6** | Refresh tokens **MUST** employ rotate-and-revoke on every redemption. | P0 |
-| **ID-7** | Bearer-token lifetime ≤ 10 min; longer-lived tokens **MUST** be sender-constrained. | P0 |
-| **ID-8** | Session IDs **MUST NOT** be used for authn; use stateless JWT/opaque refs bound by ID-4/ID-5. | P0 |
-| **ID-9** | Cookies carrying tokens **MUST** set `Secure; HttpOnly; SameSite=Strict`. | P1 |
-| **ID-10**| **MUST** log `sub, aud, azp, jti, client_id, jkt` for every token issuance & redemption. | P1 |
+This section addresses risks related to identity spoofing, token misuse, and session hijacking in OAuth-based systems. These vulnerabilities are especially critical in multi-agent and federated environments where tokens and credentials are exchanged across services.
 
+| ID      | Priority | Control Statement                                                                                                     | Description |
+|---------|----------|------------------------------------------------------------------------------------------------------------------------|-------------|
+| **ID-1**  | P0       | **MUST** enforce **PKCE (S256)** on all OAuth authorization-code flows, including confidential clients.              | Prevents interception of authorization codes, even for confidential clients. |
+| **ID-2**  | P0       | **MUST** use **JAR (RFC 9101)** *or* **PAR (RFC 9126)**; raw query-parameter requests **MUST NOT** be accepted.      | Prevents tampering by securing request parameters in signed JWTs or pushed authorization requests. |
+| **ID-3**  | P0       | If a static client ID is unavoidable, the proxy **MUST** re-prompt for consent or bind the request via JAR/PAR.     | Ensures user awareness and request integrity when static client IDs are used. |
+| **ID-4**  | P0       | **MUST** validate `aud` == self **AND** an `azp` claim for delegated flows; reject otherwise.                        | Prevents token misuse by enforcing audience and authorized party checks. |
+| **ID-5**  | P0       | **MUST** issue **sender-constrained** tokens via **DPoP (RFC 9449)** or **mTLS (RFC 8705)** in production. Applies to both interactive and service-to-service flows. | Ensures tokens are bound to the client that requested them, mitigating replay attacks. |
+| **ID-6**  | P0       | Refresh tokens **MUST** employ rotate-and-revoke on every redemption.                                                | Prevents long-lived token abuse and supports secure session renewal. |
+| **ID-7**  | P0       | Bearer-token lifetime ≤ 10 minutes; longer-lived tokens **MUST** be sender-constrained.                                  | Reduces exposure window for bearer tokens; longer-lived tokens must be bound to sender. |
+| **ID-8**  | P0       | Session IDs **MUST NOT** be used for authentication; use stateless JWT/opaque refs bound by ID-4/ID-5.                        | Avoids session ID reuse and enforces stateless, verifiable authentication. |
+| **ID-9**  | P1       | Cookies carrying tokens **MUST** set `Secure; HttpOnly; SameSite=Strict`.                                            | Protects tokens from XSS and CSRF attacks by enforcing secure cookie attributes. |
+| **ID-10** | P1       | **MUST** log `sub, aud, azp, jti, client_id, jkt` for every token issuance and redemption.                             | Enables traceability and auditability of token lifecycle events. |
+
+NLIP follows industry-standard HTTP + OAuth 2.1 practices for session handling and bearer tokens. Where NLIP defines submessage-level tokens (conversation IDs), these are bound to the same lifecycle and protections as HTTP-level credentials.
+
+NLIP integrates these controls into its identity architecture:
 - mTLS between services (short-lived certificates, 90-day max, automated renewal).
 - OAuth 2.1 bearer tokens (10-minute lifetime) plus token exchange.
 - Audience and issuer validation; reject mismatches.
-- Integrate with providers like Okta or Azure AD.
+- Integrate with providers like Okta or Azure AD for federated identity.
 - Add JTI replay cache for refresh flows.
-- Refresh-token exp ≤ 30 days and rotation-fail lockout per RFC 9700.
+- Refresh-token exp ≤ 30 days and rotation-fail lockout after 3 failed attempts in 5 minutes per RFC 9700.
 - For consent cookies: Set SameSite=Lax, partition by third-party AS domain, purge on logout/consent-revoke.
-- After N (e.g., 3) failed RT rotations in 5 min, revoke and push revocation through CACAO to IdP.
+- After N (e.g., 3) failed refresh token rotations in 5 min, revoke and push revocation through CACAO to IdP.
 - Log lockouts to SIEM with fields (event_type=rt_lockout, count, client_id) for trending replay abuse.
 
 ### 4.2 Transport and Message Integrity
 
-- TLS 1.3 only; approved cipher-suite list pinned.
-- COSE_Sign1 or detached JWS coverage.
-- Replay-nonce cache (five minutes) and expiration less than or equal to 300 seconds.
+This section addresses confidentiality, authenticity, and integrity of messages in transit—especially in multi-agent and federated environments.
+
+- NLIP mandates Transport Layer Security (TLS) version 1.3 for all communications. Cipher suites must be explicitly pinned to prevent downgrade attacks or weak encryption. This ensures forward secrecy and resistance to adversary-in-the-middle threats
+- Messages must be signed using COSE_Sign1 (CBOR Object Signing and Encryption) or detached JWS (JSON Web Signature). This guarantees message authenticity and integrity, even if the transport layer is compromised
+- Replay-nonce cache (five minutes) and expiration less than or equal to 300 seconds. This prevents attackers from reusing intercepted messages or tokens.
 - Prepare for post-quantum cryptography (PQC): Use hybrid TLS with NIST-finalized algorithms (e.g., ML-KEM based on CRYSTALS-Kyber, finalized Aug 2024).
 - Note that DPoP uses ES256/PS256; plan to migrate to PQC-safe JWS alg when standardised.
-- Add optional composite (ECDSA+ML-DSA) signature guidance; cite current NIST ML-DSA candidate (e.g., Dilithium (or whichever ML-DSA NIST selects)) as placeholder.
+- Add optional composite (ECDSA + ML-DSA / Dilithium) signature guidance; cite FIPS 204 (finalized 13 Aug 2024).
 
 ### 4.3 Runtime and Behavior Controls
 
-- Semantic firewall and jailbreak tests.
-- Tool allow-list enforced by manifest.
-- Recursion depth five; prompt length eight thousand tokens.
-- CPU, GPU, and memory quotas per agent.
-- Tie recursion limits to dynamic risk assessments.
+The following controls are designed to limit, monitor, and validate agent behavior during execution, especially in multi-agent systems where emergent or recursive actions can lead to unintended consequences. They help prevent vulnerabilities such as: jailbreaks and prompt injections, tool misuse or unauthorized access, resource exhaustion, recursive loops or runaway execution, context drift or misalignment.
+
+- Semantic firewall and jailbreak tests. These are part of NLIP’s red-team CI pipeline and CACAO playbooks for containment.
+- Tool allow-list enforced by manifest. This prevents unauthorized tool invocation and enforces role-based access. Violations are logged and flagged for review.
+- Recursion depth five; prompt length eight thousand tokens. This prevents runaway loops and excessive memory or compute usage. These limits are enforced dynamically based on task complexity and risk level.
+- CPU, GPU, and memory quotas per agent. Each agent is assigned resource quotas to prevent noisy-neighbor effects and denial-of-service scenarios. Quotas are enforced at the container or orchestration layer (e.g., Kubernetes).
+- Tie recursion limits to dynamic risk assessments. This allows more flexibility for trusted agents while containing risky behavior.
 
 ### 4.4 Secrets Lifecycle & Secure CI/CD
 
-- Store secrets in HSM or KMS.
-- Automated rotation every 90 days or on compromise.
-- CRL or OCSP stapling where applicable.
-- `cosign sign` artifacts in CI; fail build on unsigned image.
-- Kubernetes admission controller blocks unsigned or critical-CVE images.
-- Verify SBOM hash on container start-up to catch late tampering.
+This section focuses on protecting sensitive credentials and ensuring integrity across the CI/CD pipeline. It aims to address both secret management and artifact validation to prevent supply chain compromise.
+
+- Secrets must be stored in Hardware Security Modules (HSM) or Key Management Services (KMS) to ensure tamper-proof protection. This aligns with enterprise-grade security and compliance requirements.
+- Secrets should be rotated automatically every 90 days, or immediately upon detection of compromise. This reduces the window of exposure and supports zero-trust principles.
+- Certificate Revocation Lists (CRL) or Online Certificate Status Protocol (OCSP) stapling must be used to validate certificate status during TLS handshakes. This prevents use of revoked credentials in CI/CD flows
+- All build artifacts must be signed using https://github.com/sigstore/cosign. CI pipelines must fail builds if unsigned images are detected, enforcing provenance and integrity.
+- Kubernetes admission controller blocks unsigned or critical-CVE images. This ensures runtime environments only deploy verified and secure containers.
+- Software Bill of Materials (SBOM) hashes must be verified at container start-up to detect late-stage tampering. This is critical for runtime integrity and aligns with supply chain security standards
 - Add benchmark numbers & suggestion to warm-pool images (e.g., start-up hash check can impact autoscaling with ~100–300 ms/image latency; reference: <https://medium.com/@himanshu675/your-docker-images-are-lying-to-you-the-alarming-truth-about-sbom-validation-in-spring-boot-644dc5fef84a> & mirror the data in an internal wiki).
 
 ### 4.5 Remote Attestation
 
-- TPM quote on boot signed by enterprise CA.
-- Hash check of binaries before service start.
-- Audit log entry if checksum deviates.
-- Optional Intel TDX / AMD SEV-SNP guest report for VM isolation (see threat 3.8).
-- OCI image signature + `cosign verify` as software fallback.
+Remote attestation is a security mechanism that allows systems to prove their integrity to a verifier, typically before executing sensitive workloads or joining a trusted network. It’s especially critical in multi-agent and cloud-native environments where agents may run on ephemeral or distributed infrastructure.
+
+- TPM quote on boot signed by enterprise CA. This helps detect tampering at the firmware or bootloader level.
+- Hash check of binaries before service start. This ensures that no unauthorized modifications occurred post-deployment.
+- Audit log entry if checksum deviates. This supports forensic analysis and compliance with integrity monitoring policies.
+- Optional Intel TDX / AMD SEV-SNP guest report for VM isolation (see threat 3.8). These technologies provide hardware-backed isolation and cryptographic reports of VM state. This is especially relevant to threat 3.8 Data-at-Rest Exposure, where VM-level isolation protects vector stores and logs.
+- OCI image signature + `cosign verify` as software fallback. This ensures that container images are authentic and untampered, even in software-only deployments.
 
 ### 4.6 Observability, Cost & Audit
 
-- NLIP-Trace-ID header propagated across agent chain.
-- Structured JSON logs to SIEM; encrypted at rest; 30-day retention.
-- Distributed trace sampling one to five percent.
-- PII and secret scrubbing hooks on log and trace emit.
-- Real-time anomaly detection on trace spans (unexpected tool or cost spike).
-- Merkle-root signed batch every 24 hours (optional sub-minute).
-- Integrate with tools like Splunk or Datadog.
-- Cost metrics `nlip_inference_cost_usd_total`, `nlip_prompt_tokens_total`.
+This section supports business imperatives that NLIP agents and services are: traceable across multi-agent chains; auditable for compliance and forensic needs; cost-aware to prevent budget overruns; and secure against data leakage and anomalous behavior.
+
+- NLIP-Trace-ID header propagated across agent chain. This enables end-to-end traceability for debugging, cost attribution, and anomaly detection.
+- Structured JSON logs to SIEM; encrypted at rest; 30-day retention for centralized monitoring and alerting. 
+- Distributed trace sampling one to five percent; ensuring observability without compromising performance.
+- PII and secret scrubbing hooks on log and trace emit. This prevents accidental data leakage and supports compliance with privacy regulations.
+- Real-time anomaly detection on trace spans (unexpected tool or cost spike) enables rapid investigation.
+- Merkle-root signed batch every 24 hours (optional sub-minute); provides tamper-evident audit trails for forensic integrity.
+- Integrate with tools like Splunk or Datadog; providing dashboards, alerting, log search, and cost visulization.
+- Cost metrics `nlip_inference_cost_usd_total`, `nlip_prompt_tokens_total`; support budget tracking, cost optimization, and chargeback models.
 - Define SOC KPIs: MTTD < 5 min for token-aud mismatch; MTTR < 30 min for revoked credential redeploy (clock starts at first security-team acknowledgement).
 
 ### 4.7 Incident Response Hooks
 
-- CACAO playbooks for PI-001, SCP-002, DoS-003, INV-004.
-- Immutable evidence storage; PII redaction per jurisdiction.
-- Extend CACAO to push revocation events into Okta/AAD and cloud-WAF ACLs automatically.
-- Record triage SLA for prompt-injection incidents: containment < 15 min; full remediation < 4 h.
+This section provides guidance how to detect, contain, and remediate security incidents in real time, with automation and cross-functional coordination.
+
+- CACAO (Collaborative Automated Course of Action Operations) playbooks for common incident types: PI-001: Prompt Injection, SCP-002: Supply Chain Compromise, DoS-003: Denial of Service, and INV-004: Credential Inversion or misuse. These playbooks define automated and manual steps for detection, containment, and recovery.
+- Incident logs and forensic data are stored in write-once buckets with Merkle-root signing for integrity. PII redaction is applied based on jurisdictional requirements (e.g., GDPR, CCPA).
+- Extend CACAO to push revocation events into Okta/AAD and cloud-WAF ACLs automatically. This enables real-time credential invalidation and traffic blocking.
+- Record triage SLA for prompt-injection incidents: containment < 15 min; full remediation < 4 h. These SLAs are tracked in the SOC dashboard and tied to security team acknowledgment timestamps.
 - Conduct regular cross-functional tabletop exercises (involving legal, compliance, SRE, communications) to simulate incident scenarios, validate CACAO playbooks, and refine incident runbooks before live deployment.
 
 ### 4.8 AI Agent Lifecycle Management
+
+AI Agent Lifecycle Management refers to the end-to-end governance of AI agents. This lifecycle ensures agents are: designed ethically developed securely; deployed responsibly; monitored continuously; decommissioned cleanly. It mirrors traditional software lifecycle management but is adapted for agentic AI, which introduces unique challenges like autonomy, tool orchestration, and contextual reasoning.
 
 - Define phases: Design, development, deployment, monitoring, decommissioning.
 - **Controls:** Secure decommissioning (data wipe, key revocation); version control for agents; ethical reviews at design.
 - **TCO Considerations:** Estimate costs for controls (e.g., sandboxing adds 20-30% cloud spend); tiered implementation model.
 
 ### 4.9 OAuth & Token-Hardening Sequence Reference (Appendix D excerpt)
+
+The following diagram provides a visual and procedural breakdown of a secure OAuth 2.1 flow using best-practice enhancements.
+
+This sequence illustrates how NLIP systems securely handle OAuth authorization using:
+
+- PAR (Pushed Authorization Requests) for request integrity
+- PKCE (Proof Key for Code Exchange) for code interception protection
+- DPoP (Demonstration of Proof-of-Possession) for sender-constrained tokens
+
+It also shows how a proxy with a static client ID can safely participate in the flow without compromising security.
 
 ```mermaid
 sequenceDiagram
@@ -509,7 +539,7 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 |---------------------|----------------------------------|
 | Art. 9 (Risk Management) | Risk scoring in Section 3    |
 | Art. 28 (GPAI Obligations) | 3.11 governance, Code of Practice |
-| Art. 52 (Systemic Risks) | 3.2 supply-chain, guidelines 18 July 2025 |
+| Art. 52 (Systemic Risks) | 3.2 supply-chain, guidelines (18 Jul 2025) |
 
 ---
 
@@ -527,6 +557,8 @@ Other considerations include:
 - **Redirection**: For purposes of filtering and data-loss prevention, it should be possible to redirect responses to a filtering entity, which can ensure that policies on data exfiltration are applied (such as PII filtering).  
 - **Service Registration**: Service registration should be kept localized, so that enterprise-wide namespaces are not flooded with DNS names.  
 - **Agent Signing**: While it is not a function of NLIP per se, the message/sub-message system in NLIP can be used in the coding of an agent to present a code signature, to authenticate the agent, and prevent fraudulent ones from masquerading as real ones.  
+
+NLIP does not define a backchannel push mechanism (e.g., server-initiated webhooks). Deployments that need push semantics should reuse existing enterprise patterns (e.g., AMQP, WebSockets with mTLS, or cloud pub/sub) under NLIP’s secure message envelope.
 
 ### 7.1 Zero-Trust Option
 
@@ -715,6 +747,8 @@ This diagram illustrates the secure flow of NLIP traffic across four logical tie
 - **Tool Containers** run in sandboxed, read-only file systems, and validate **Signed Msg** payloads before executing tool actions.
 
 This layered design enables strict enforcement of trust boundaries, replay protection, and non-repudiation of agent actions.
+
+Reminder: NLIP supports HTTPS/TLS as baseline transport, with mutual-TLS (mTLS) as an enterprise-grade enhancement. mTLS SHOULD be used when appropriate (e.g., service-to-service, sensitive multi-tenant workloads). 
 
 ### C.2 Multi-Cloud Secure Deployment Architecture for NLIP
 
