@@ -369,7 +369,7 @@ NLIP integrates these controls into its identity architecture:
 
 ### 4.2 Transport and Message Integrity
 
-This section addresses confidentiality, authenticity, and integrity of messages in transit—especially in multi-agent and federated environments.
+This section addresses confidentiality, authenticity, and integrity of messages in transit, especially in multi-agent and federated environments.
 
 - NLIP mandates Transport Layer Security (TLS) version 1.3 for all communications. Cipher suites must be explicitly pinned to prevent downgrade attacks or weak encryption. This ensures forward secrecy and resistance to adversary-in-the-middle threats
 - Messages must be signed using COSE_Sign1 (CBOR Object Signing and Encryption) or detached JWS (JSON Web Signature). This guarantees message authenticity and integrity, even if the transport layer is compromised
