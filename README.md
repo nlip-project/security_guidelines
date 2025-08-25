@@ -510,75 +510,93 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 
 ---
 
-## 7. Reference Architecture of Pluggable, Customizable Control 
+## 7 Reference Architecture of Pluggable, Customizable Control 
 
-In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt NLIP can benefit from a security enhanced architecture that supports customized, pluggable controls. 
+In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt NLIP can benefit from a security-enhanced architecture that supports customized, pluggable controls. 
 
-![Reference Agent Architecture](figures/NLIPWithReferenceMonitors.png)
+![Diagram: Reference Agent Architecture](figures/NLIPWithReferenceMonitors.png)
 
-As illustrated in the picture above, such an architecture outlines a set of generalized places (a.k.a. hooking points or reference monitors) where one can add customized control functions and even security policies adapted to your applications/deployments/enterprises. These reference monitors (RM) can enforce policies and controls on the NLIP messages between (1) agents and clients (Type-1 RM); (2) agents and agents (Type-2 RM). Additionally, this architecture favors reference monitors between (3) agents and environments (Type-3 RM), enabling one to perform control on messages between agent and third-party/external tools, and betweena agent and AI models. 
+As illustrated in the picture above, such an architecture outlines a set of generalized places (a.k.a. hooking points or reference monitors) where one can add customized control functions and even security policies adapted to your applications/deployments/enterprises. These reference monitors (RM) can enforce policies and controls on the NLIP messages between (1) agents and clients (Type-1 RM); (2) agents and agents (Type-2 RM). Additionally, this architecture favors reference monitors between (3) agents and environments (Type-3 RM), enabling one to perform control on messages between an agent and third-party/external tools, and between an agent and AI models. 
 
 These controls can help defeat advanced threats against agent systems and related techniques. An initial list of advanced threats that one can defeat by plugging controls in these RMs (Type-1 to Type-3) are summarized in the table below. 
 
 A circle means that the threat can be defeated in the RM.
 
-| Threat                         | Type-1 RM<br />(Agent to client) | Type-2 RM<br />(Agent to agent) | Type-3 RM<br />(Agent to environment) |
-| :----------------------------- | :------------------------------: | :-----------------------------: | :-----------------------------------: |
-| Prompt Injection               |            $\bigcirc$            |                -                |                   -                   |
-| Indirect Prompt Injection      |                -                 |           $\bigcirc$            |              $\bigcirc$               |
-| Sensitive Data Disclosure      |            $\bigcirc$            |           $\bigcirc$            |              $\bigcirc$               |
-| Jailbreak Attack               |            $\bigcirc$            |           $\bigcirc$            |              $\bigcirc$               |
-| Malicious Reply                |                -                 |           $\bigcirc$            |                   -                   |
-| Supply-Chain Poisoning         |                -                 |                -                |              $\bigcirc$               |
-| Model Extraction and Inversion |                -                 |                -                |              $\bigcirc$               |
-| MINJA/Memory Injection Attack        |                -                 |                -                |              $\bigcirc$               |
+| Threat                         | Type-1 RM<br/>(Agent to client) | Type-2 RM<br/>(Agent to agent) | Type-3 RM<br/>(Agent to environment) |
+|--------------------------------|:-------------------------------:|:------------------------------:|:------------------------------------:|
+| Prompt Injection               |                ○                |                –               |                  –                   |
+| Indirect Prompt Injection      |                –                |                ○               |                  ○                   |
+| Sensitive Data Disclosure      |                ○                |                ○               |                  ○                   |
+| Jailbreak Attack               |                ○                |                ○               |                  ○                   |
+| Malicious Reply                |                –                |                ○               |                  –                   |
+| Supply-Chain Poisoning         |                –                |                –               |                  ○                   |
+| Model Extraction and Inversion |                –                |                –               |                  ○                   |
+| MINJA<br/>Memory Injection Attack |             –                |                –               |                  ○                   |
 
+---
 
+## 8 Deployment Considerations
 
+NLIP can be deployed in environments where data is not publicly accessible. This allows for agents to provide value from knowledge gained from proprietary business-critical data, without exposing such data (where such exposure may be restricted for legal, regulatory, or commercial purposes). This can be achieved by either deploying a proxy (for a single DMZ), or, for more highly secure environments, indirect routing of the NLIP messages using the AMQP binding, as shown in the diagram.
 
+![Diagram: Indirect message routing through dual-DMZ](figures/dual-dmz.png)
 
-## 8  Future Enhancements
+The above diagram illustrates situations in highly regulated enterprises. There is a firewall protecting the internal private cloud network on the left, and a _separate_ firewall guarding inbound traffic from Internet-connected public cloud sources on the right. Because these are not handled by the same firewall, it is difficult for application traffic to navigate through this environment. Firewall administrators would have to coordinate not only access ports, but internal ports between the firewalls for each application. With an NLIP processor using indirect routing, this can be managed securely without the need to open up ports.
 
-- Dedicated “Deployment” section in the guidelines, with clear, actionable recommendations for securing NLIP in a typical enterprise rollout.
-- Map NLIP’s security layers onto real-world system components, with help for implementers to understand their existing infrastructures (e.g., service mesh, API gateway, container clusters) each security control belongs.
+Other considerations include:
+
+- **Certificate Authority**: The Certificate Authority should be customizable so that the owner of the data can be the CA, if desired. This allows for full access monitoring.  
+- **Redirection**: For purposes of filtering and data-loss prevention, it should be possible to redirect responses to a filtering entity, which can ensure that policies on data exfiltration are applied (such as PII filtering).  
+- **Service Registration**: Service registration should be kept localized, so that enterprise-wide namespaces are not flooded with DNS names.  
+- **Agent Signing**: While it is not a function of NLIP per se, the message/sub-message system in NLIP can be used in the coding of an agent to present a code signature, to authenticate the agent, and prevent fraudulent ones from masquerading as real ones.  
+
+### 8.1 Zero-Trust Option
+
+To build this into a Zero-Trust environment (useful in IoT or other critical environments) it is possible to reduce the port exposure to zero with the AMQP binding, by ensuring all connectivity is via inbound connections to the DMZ (i.e., have one of them in reverse-connect mode) and then use the indirect routing feature mentioned earlier. This is illustrated in the following diagram.
+
+![Diagram: Agentic Cross-Domain ZTNA](figures/ztna.png)
+
+---
+
+## 9  Future Enhancements
+
 - Further integration and clarification of security controls into the core NLIP specification.
 
 ---
 
-## 9se  Glossary
+## 10 Glossary
 
-| Term              | Definition                                                                 |
-|-------------------|----------------------------------------------------------------------------|
-| CACAO playbook    | JSON-based incident-response workflow spec (OASIS).                        |
-| Chain-of-thought (CoT) | Intermediate reasoning tokens that may expose logic or PII.           |
-| COSE_Sign1        | CBOR Object Signing and Encryption single-signature envelope.              |
-| Confused-deputy   | Authentication flaw where a legitimate agent misuses its authority.        |
-| Differential privacy | Technique adding statistical noise to outputs.                          |
-| HSM               | Tamper-resistant device for cryptographic keys.                            |
-| MINJA             | Memory Injection Attack; poisoning of vector memory.                       |
-| Prompt injection  | Exploit manipulating LM prompts to alter behavior.                         |
-| Indirect Prompt injection  | Attack where malicious instructions are embedded in external content that the LM processes, causing unintended behavior.                         |
-| Jailbreak Attack | Exploit using carefully crafted prompts to bypass an LM's safety guardrails and content policies.                         |
-| SBOM              | Software Bill of Materials.                                                |
-| Token exchange    | OAuth flow trading one token for a scoped token.                           |
-| TLS 1.3           | Current TLS version with forward secrecy.                                  |
-| TPM quote         | Signed PCR measurements attesting boot state.                              |
-| Zero-trust        | Model eliminating implicit trust; each request is checked.                 |
-| PQC               | Post-Quantum Cryptography; algorithms resistant to quantum attacks.        |
-| EU AI Act         | EU regulation on AI, effective 2025 for high-risk systems.                 |
-| DPoP              | OAuth proof-of-possession JWT bound to TLS connection.                     |
-| OpenTelemetry     | CNCF observability framework for traces & metrics.                         |
-| PKCE              | Proof Key for Code Exchange, a security extension for OAuth authorization code flows. |
-| JAR               | JWT-Secured Authorization Request, a method to secure OAuth requests using JWTs. |
-| PAR               | Pushed Authorization Requests, a technique to push OAuth parameters to the server. |
-| azp               | Authorized party claim in JWTs for delegated flows. |
-| JTI               | JWT ID, unique identifier for tokens to prevent replay. |
-| ML-DSA            | Module Lattice Digital Signature Algorithm, a post-quantum signature scheme. |
-| RAG               | Retrieval-Augmented Generation, a technique to improve factuality in LLMs. |
+| Term                   | Definition                                                                                       |
+|------------------------|--------------------------------------------------------------------------------------------------|
+| CACAO playbook         | JSON-based incident-response workflow spec (OASIS).                                              |
+| Chain-of-thought (CoT) | Intermediate reasoning tokens that may expose logic or PII.                                      |
+| COSE_Sign1             | CBOR Object Signing and Encryption single-signature envelope.                                    |
+| Confused-deputy        | Authentication flaw where a legitimate agent misuses its authority.                              |
+| Differential privacy   | Technique adding statistical noise to outputs.                                                   |
+| HSM                    | Tamper-resistant device for cryptographic keys.                                                  |
+| MINJA                  | Memory Injection Attack; poisoning of vector memory.                                             |
+| Prompt injection       | Exploit manipulating LM prompts to alter behavior.                                               |
+| Indirect prompt injection | Attack where malicious instructions are embedded in external content that the LM processes, causing unintended behavior. |
+| Jailbreak attack       | Exploit using carefully crafted prompts to bypass an LM's safety guardrails and content policies. |
+| SBOM                   | Software Bill of Materials.                                                                      |
+| Token exchange         | OAuth flow trading one token for a scoped token.                                                 |
+| TLS 1.3                | Current TLS version with forward secrecy.                                                        |
+| TPM quote              | Signed PCR measurements attesting boot state.                                                    |
+| Zero-trust             | Model eliminating implicit trust; each request is checked.                                       |
+| PQC                    | Post-Quantum Cryptography; algorithms resistant to quantum attacks.                              |
+| EU AI Act              | EU regulation on AI, effective 2025 for high-risk systems.                                       |
+| DPoP                   | OAuth proof-of-possession JWT bound to TLS connection.                                           |
+| OpenTelemetry          | CNCF observability framework for traces & metrics.                                               |
+| PKCE                   | Proof Key for Code Exchange; a security extension for OAuth authorization code flows.            |
+| JAR                    | JWT-Secured Authorization Request; a method to secure OAuth requests using JWTs.                 |
+| PAR                    | Pushed Authorization Requests; a technique to push OAuth parameters to the server.               |
+| azp                    | Authorized party claim in JWTs for delegated flows.                                              |
+| JTI                    | JWT ID; unique identifier for tokens to prevent replay.                                          |
+| ML-DSA                 | Module Lattice Digital Signature Algorithm; a post-quantum signature scheme.                     |
+| RAG                    | Retrieval-Augmented Generation; a technique to improve factuality in LLMs.                       |
 
----
 
-## 9  Normative References (additions highlighted)
+## 11  Normative References (additions highlighted)
 
 1. NLIP Specification Core – ECMA TC-56 Working Draft 2025-006
 2. Model Context Protocol (MCP) Security Best Practices – MCP-WG-sec-BP-2025-v1.1
@@ -597,6 +615,7 @@ A circle means that the threat can be defeated in the RM.
 15. **RFC 9449 – Demonstrating Proof-of-Possession (DPoP)**
 16. **RFC 9700 – OAuth 2.0 Security BCP**
 17. **RFC 8705 – OAuth 2.0 Mutual-TLS Tokens**
+18. ISO/IEC 19464: Information technology — Advanced Message Queuing Protocol (AMQP) v1.0 specification
 
 ---
 
