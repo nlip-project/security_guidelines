@@ -1,6 +1,6 @@
 # NLIP Security Guidelines and Best Practices
 
-**Last-Modified:** 2025-08-20 
+**Last-Modified:** 2025-08-24 
 **Status:** Revised working draft toward ECMA TC-56 ballot  
 **Audience:** Security engineers, SREs, architects, CISOs, and compliance teams deploying NLIP agents at enterprise-scale.
 
@@ -510,32 +510,7 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 
 ---
 
-## 7 Reference Architecture of Pluggable, Customizable Control 
-
-In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt NLIP can benefit from a security-enhanced architecture that supports customized, pluggable controls. 
-
-![Diagram: Reference Agent Architecture](figures/NLIPWithReferenceMonitors.png)
-
-As illustrated in the picture above, such an architecture outlines a set of generalized places (a.k.a. hooking points or reference monitors) where one can add customized control functions and even security policies adapted to your applications/deployments/enterprises. These reference monitors (RM) can enforce policies and controls on the NLIP messages between (1) agents and clients (Type-1 RM); (2) agents and agents (Type-2 RM). Additionally, this architecture favors reference monitors between (3) agents and environments (Type-3 RM), enabling one to perform control on messages between an agent and third-party/external tools, and between an agent and AI models. 
-
-These controls can help defeat advanced threats against agent systems and related techniques. An initial list of advanced threats that one can defeat by plugging controls in these RMs (Type-1 to Type-3) are summarized in the table below. 
-
-A circle means that the threat can be defeated in the RM.
-
-| Threat                         | Type-1 RM<br/>(Agent to client) | Type-2 RM<br/>(Agent to agent) | Type-3 RM<br/>(Agent to environment) |
-|--------------------------------|:-------------------------------:|:------------------------------:|:------------------------------------:|
-| Prompt Injection               |                ○                |                –               |                  –                   |
-| Indirect Prompt Injection      |                –                |                ○               |                  ○                   |
-| Sensitive Data Disclosure      |                ○                |                ○               |                  ○                   |
-| Jailbreak Attack               |                ○                |                ○               |                  ○                   |
-| Malicious Reply                |                –                |                ○               |                  –                   |
-| Supply-Chain Poisoning         |                –                |                –               |                  ○                   |
-| Model Extraction and Inversion |                –                |                –               |                  ○                   |
-| MINJA<br/>Memory Injection Attack |             –                |                –               |                  ○                   |
-
----
-
-## 8 Deployment Considerations
+## 7 Deployment Considerations
 
 NLIP can be deployed in environments where data is not publicly accessible. This allows for agents to provide value from knowledge gained from proprietary business-critical data, without exposing such data (where such exposure may be restricted for legal, regulatory, or commercial purposes). This can be achieved by either deploying a proxy (for a single DMZ), or, for more highly secure environments, indirect routing of the NLIP messages using the AMQP binding, as shown in the diagram.
 
@@ -550,7 +525,7 @@ Other considerations include:
 - **Service Registration**: Service registration should be kept localized, so that enterprise-wide namespaces are not flooded with DNS names.  
 - **Agent Signing**: While it is not a function of NLIP per se, the message/sub-message system in NLIP can be used in the coding of an agent to present a code signature, to authenticate the agent, and prevent fraudulent ones from masquerading as real ones.  
 
-### 8.1 Zero-Trust Option
+### 7.1 Zero-Trust Option
 
 To build this into a Zero-Trust environment (useful in IoT or other critical environments) it is possible to reduce the port exposure to zero with the AMQP binding, by ensuring all connectivity is via inbound connections to the DMZ (i.e., have one of them in reverse-connect mode) and then use the indirect routing feature mentioned earlier. This is illustrated in the following diagram.
 
@@ -558,13 +533,13 @@ To build this into a Zero-Trust environment (useful in IoT or other critical env
 
 ---
 
-## 9  Future Enhancements
+## 8  Future Enhancements
 
 - Further integration and clarification of security controls into the core NLIP specification.
 
 ---
 
-## 10 Glossary
+## 9 Glossary
 
 | Term                   | Definition                                                                                       |
 |------------------------|--------------------------------------------------------------------------------------------------|
@@ -596,7 +571,7 @@ To build this into a Zero-Trust environment (useful in IoT or other critical env
 | RAG                    | Retrieval-Augmented Generation; a technique to improve factuality in LLMs.                       |
 
 
-## 11  Normative References (additions highlighted)
+## 10  Normative References (additions highlighted)
 
 1. NLIP Specification Core – ECMA TC-56 Working Draft 2025-006
 2. Model Context Protocol (MCP) Security Best Practices – MCP-WG-sec-BP-2025-v1.1
@@ -693,7 +668,9 @@ To build this into a Zero-Trust environment (useful in IoT or other critical env
 
 ---
 
-## Appendix C — Reference Architecture Diagram
+## Appendix C — Reference Architectures
+
+### C.1 Layered Trust Boundaries in NLIP Traffic Flow
 
 ```mermaid
 flowchart LR
@@ -731,6 +708,8 @@ This diagram illustrates the secure flow of NLIP traffic across four logical tie
 - **Tool Containers** run in sandboxed, read-only file systems, and validate **Signed Msg** payloads before executing tool actions.
 
 This layered design enables strict enforcement of trust boundaries, replay protection, and non-repudiation of agent actions.
+
+### C.2 Multi-Cloud Secure Deployment Architecture for NLIP
 
 ```mermaid
 flowchart LR
@@ -806,6 +785,70 @@ To support **multi-cloud deployments** (e.g., AWS + Azure), implement:
 - **Cloud-native policy enforcement** (e.g., AWS SCP, Azure Policy, GCP Org Policies)
 
 to mitigate control-plane concentration risk and enforce org-wide guardrails across providers.
+
+### C.3 Customizable Control Points for Securing NLIP Agents 
+
+In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt NLIP can benefit from a security-enhanced architecture that supports customized, pluggable controls. 
+
+```mermaid
+flowchart LR
+  %% === NLIP Client ===
+  Client["NLIP Client"]
+
+  %% === NLIP Framework ===
+  subgraph Framework["NLIP Framework"]
+    direction TB
+
+    AgentCore["Agent (e.g., LangChain, AG2, LlamaIndex)"]
+
+    subgraph Monitors["Reference Monitors"]
+      RM1["Type-1 RM"]
+      RM2["Type-2 RM"]
+      RM3["Type-3 RM"]
+    end
+
+    %% Internal wiring
+    AgentCore <--> RM1
+    AgentCore <--> RM2
+    AgentCore <--> RM3
+  end
+
+  %% === Right-side Agent (own rectangle, no extra blank node needed) ===
+  subgraph RightAgent["Agent"]
+    RAgent["External Agent"]
+  end
+
+  %% === External Environment (Tools + LLMs only) ===
+  subgraph External["External Environment"]
+    direction TB
+    Tools["Tools (e.g., MCP)"]
+    LLMs["LLMs (e.g., OpenAI API)"]
+  end
+
+  %% === Flows ===
+  Client -->|"NLIP messages"| RM1
+  RM2 -->|"NLIP messages"| RAgent
+  RM3 -->|"Tool Calls"| Tools
+  RM3 -->|"LLM Calls"| LLMs
+
+```
+
+As illustrated in the picture above, such an architecture outlines a set of generalized places (a.k.a. hooking points or reference monitors) where one can add customized control functions and even security policies adapted to your applications/deployments/enterprises. These reference monitors (RM) can enforce policies and controls on the NLIP messages between (1) agents and clients (Type-1 RM); (2) agents and agents (Type-2 RM). Additionally, this architecture favors reference monitors between (3) agents and environments (Type-3 RM), enabling one to perform control on messages between an agent and third-party/external tools, and between an agent and AI models. 
+
+These controls can help defeat advanced threats against agent systems and related techniques. An initial list of advanced threats that one can defeat by plugging controls in these RMs (Type-1 to Type-3) are summarized in the table below. 
+
+A circle means that the threat can be defeated in the RM.
+
+| Threat                         | Type-1 RM<br/>(Agent to client) | Type-2 RM<br/>(Agent to agent) | Type-3 RM<br/>(Agent to environment) |
+|--------------------------------|:-------------------------------:|:------------------------------:|:------------------------------------:|
+| Prompt Injection               |                ○                |                –               |                  –                   |
+| Indirect Prompt Injection      |                –                |                ○               |                  ○                   |
+| Sensitive Data Disclosure      |                ○                |                ○               |                  ○                   |
+| Jailbreak Attack               |                ○                |                ○               |                  ○                   |
+| Malicious Reply                |                –                |                ○               |                  –                   |
+| Supply-Chain Poisoning         |                –                |                –               |                  ○                   |
+| Model Extraction and Inversion |                –                |                –               |                  ○                   |
+| MINJA<br/>Memory Injection Attack |             –                |                –               |                  ○                   |
 
 ---
 
