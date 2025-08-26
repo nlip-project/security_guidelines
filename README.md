@@ -564,7 +564,7 @@ NLIP does not define a backchannel push mechanism (e.g., server-initiated webhoo
 
 To build this into a Zero-Trust environment (useful in IoT or other critical environments) it is possible to reduce the port exposure to zero with the AMQP binding, by ensuring all connectivity is via inbound connections to the DMZ (i.e., have one of them in reverse-connect mode) and then use the indirect routing feature mentioned earlier. This is illustrated in the following diagram.
 
-![Diagram: Agentic Cross-Domain ZTNA](figures/ztna.png)
+![Diagram: Agentic Cross-Domain ZTNA](figures/zero_trust_ztna.png)
 
 In this diagram, secure connections are only made outbound from operational systems into a secure DMZ.  No ports need to be opened on the operational (private, public or IoT systems).  However, logically it will appear at the protocol layer as one connection, so the application need not have additional logic to deal with this.
 
