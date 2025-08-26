@@ -249,6 +249,8 @@ Each threat profile contains:
 
 **Vulnerability:** Mishandling sensitive data leads to regulatory violations.
 
+**Enterprise example:** An EU HR‑support agent built on NLIP uses retrieval over an untagged vector store; when answering a payroll query it logs the full prompt/response—including employee names, national IDs, and salaries—to a centralized observability service replicated to a US region. The missing data‑classification tags and lack of redaction breach GDPR Art. 5/32/44 (lawfulness, security, and cross‑border transfers), triggering the controller’s 72‑hour notification obligation.
+
 **Risk Score:** 4x5=20 (Regulatory scrutiny increasing).
 
 **Controls:**
@@ -272,6 +274,8 @@ Each threat profile contains:
 ### 3.12 Multi-Tenancy and Isolation
 
 **Vulnerability:** Cross-tenant data leakage or privilege escalation.
+
+**Enterprise example:** Header‑based routing lets Tenant A spoof x‑tenant‑id and, via a shared tool in a non‑isolated namespace, read Tenant B’s data (no claim‑bound auth, no per‑tenant keys/logs) → cross‑tenant leakage and required isolation fixes.
 
 **Risk Score:** 3x4=12 (Cloud-native risks).
 
