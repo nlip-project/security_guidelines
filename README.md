@@ -26,35 +26,45 @@
 
 ## 3  Threat Reference Guide (enterprise examples & controls)
 
-Section 3 outlines a curated set of **external threats** that already exist in agentic systems, large language model deployments, and multi-tenant orchestration environments commonplace in enterprise environments. These threats are not hypothetical, they have been observed in the wild or demonstrated through public red-team exercises and academic literature. These threat profiles are designed to help implementers of NLIP and adjacent protocols to recognize, prioritize, and mitigate risks that originate outside the control plane, including adversarial prompts, cross-agent impersonation, model extraction, and session hijack techniques. This reference is intended to guide enterprise security architects and product teams in aligning defensive controls to realistic attacker capabilities.
+Section 3 outlines a curated set of **external threats** that already exist in agentic systems, large language model deployments, and multi-tenant orchestration environments commonplace in enterprises. These threats are not hypothetical; they have been observed in the wild or demonstrated through public red-team exercises and academic literature. These threat profiles are designed to help implementers of NLIP and adjacent protocols recognize, prioritize, and mitigate risks that originate outside the control plane, including adversarial prompts, cross-agent impersonation, model extraction, and session hijack techniques. This reference is intended to guide enterprise security architects and product teams in aligning defensive controls to realistic attacker capabilities.
 
-### Threat Risk Heat-Map
+#### Threat Risk Heat-Map
 
-**Legend:** High = ≥15 🔴 (red); Medium = 9-14 🟠 (orange); Low = ≤8 🟢 (green)
+The Threat Risk Heat‑Map highlights the highest‑priority security risks for NLIP‑based multi‑agent systems. Each threat is scored using a 1–5 likelihood × impact model to prioritize mitigations and guide resource allocation. The table categorizes threats into High, Medium, or Low risk levels and identifies the primary control owner accountable for implementing safeguards. This visual summary serves as a quick reference for security architects, SREs, and compliance teams to align defensive measures with realistic attacker capabilities and enterprise risk tolerance. Risk scoring follows NIST SP 800‑30 Rev. 1 (likelihood × impact, 1–5). Threat selection and likelihood calibration are informed by the MITRE ATLAS knowledge base and the 2025 Secure AI program updates that expand ATLAS with additional observed techniques, incidents, and mitigations.
+
+The following table summarizes these threats and their associated control owners. Control Owner roles are defined as follows:
+
+- AppSec (Application Security) — Secures application code, APIs, and runtime logic; enforces secure coding and mitigates injection, session hijack, and privilege escalation.
+- SRE (Site Reliability Engineering) — Maintains infrastructure reliability and security; applies segmentation, runtime isolation, and DoS resilience.
+- ML Eng (Machine Learning Engineering) — Builds and safeguards ML models; prevents poisoning, extraction, and adversarial attacks while ensuring compliance.
+- Compliance (Compliance and Risk Management) — Oversees regulatory adherence; manages data governance and audit readiness (e.g., GDPR, HIPAA, EU AI Act).
+
+
+**Legend:** High = ≥15; Medium = 9–14; Low = ≤8 (likelihood × impact)
 
 | Threat Category       | Likelihood | Impact | Overall Risk | Control Owner |
 |-----------------------|------------|--------|--------------|---------------|
-| 3.1 Prompt Injection      | 4          | 5      | High 🔴      | AppSec       |
-| 3.2 Supply-Chain Poisoning| 4          | 4      | High 🔴      | SRE          |
-| 3.3 Confused-Deputy       | 3          | 5      | High 🔴      | AppSec       |
-| 3.4 Inference Flooding    | 4          | 3      | Medium 🟠    | SRE          |
-| 3.5 Session Hijack        | 3          | 4      | Medium 🟠    | AppSec       |
-| 3.6 MINJA                 | 3          | 4      | Medium 🟠    | ML Eng       |
-| 3.7 Model Extraction      | 2          | 5      | Medium 🟠    | ML Eng       |
-| 3.8 Data-at-Rest Exposure | 3          | 4      | Medium 🟠    | SRE          |
-| 3.9 CoT Leakage           | 2          | 4      | Low 🟢       | AppSec       |
-| 3.10 Hallucination-Driven Fraud   | 3          | 5      | High 🔴      | ML Eng       |
-| 3.11 Data Governance       | 4          | 5      | High 🔴      | Compliance   |
-| 3.12 Multi-Tenancy         | 3          | 4      | Medium 🟠    | SRE          |
-| 3.13 Advanced Adversarial  | 3          | 4      | Medium 🟠    | ML Eng       |
-| 3.14 Malicious reply       | 3          | 4      | Medium 🟠    | AppSec       |
-| 3.15 Human Factors         | 4          | 3      | Medium 🟠    | AppSec       |
+| 3.1 Prompt Injection      | 4          | 5      | High      | AppSec       |
+| 3.2 Supply-Chain Poisoning| 4          | 4      | High      | SRE          |
+| 3.3 Confused-Deputy       | 3          | 5      | High      | AppSec       |
+| 3.4 Inference Flooding    | 4          | 3      | Medium    | SRE          |
+| 3.5 Session Hijack        | 3          | 4      | Medium    | AppSec       |
+| 3.6 MINJA                 | 3          | 4      | Medium    | ML Eng       |
+| 3.7 Model Extraction      | 2          | 5      | Medium    | ML Eng       |
+| 3.8 Data-at-Rest Exposure | 3          | 4      | Medium    | SRE          |
+| 3.9 CoT Leakage           | 2          | 4      | Low       | AppSec       |
+| 3.10 Hallucination-Driven Fraud   | 3          | 5      | High      | ML Eng       |
+| 3.11 Data Governance       | 4          | 5      | High      | Compliance   |
+| 3.12 Multi-Tenancy         | 3          | 4      | Medium    | SRE          |
+| 3.13 Advanced Adversarial  | 3          | 4      | Medium    | ML Eng       |
+| 3.14 Malicious Reply       | 3          | 4      | Medium    | AppSec       |
+| 3.15 Human Factors         | 4          | 3      | Medium    | AppSec       |
 
 Each threat profile contains:
 
 - **Vulnerability:** summary of exploit path.
 - **Enterprise example:** realistic scenario.
-- **Risk Score:** Likelihood (1-5) x Impact (1-5) based on 2025 threat landscape (e.g., MITRE ATLAS updates).
+- **Risk Score:** Likelihood (1-5) x Impact (1-5).
 - **Controls:** guidelines and best-practice mitigations.
 
 ### 3.1 Prompt Injection
@@ -578,35 +588,41 @@ In this diagram, secure connections are only made outbound from operational syst
 
 ## 9 Glossary
 
-| Term                   | Definition                                                                                       |
-|------------------------|--------------------------------------------------------------------------------------------------|
-| **azp**                | Authorized party claim in JWTs for delegated flows.                                              |
-| **CACAO playbook**     | JSON-based incident-response workflow spec (OASIS).                                              |
-| **Chain-of-thought (CoT)** | Intermediate reasoning tokens that may expose logic or PII.                                  |
-| **Confused-Deputy**    | Authentication flaw where a legitimate agent misuses its authority.                              |
-| **COSE_Sign1**         | CBOR Object Signing and Encryption single-signature envelope.                                    |
-| **Differential privacy** | Technique adding statistical noise to outputs.                                                 |
-| **DPoP**               | OAuth proof-of-possession JWT bound to TLS connection.                                           |
-| **EU AI Act**          | EU regulation on AI, effective 2025 for high-risk systems.                                       |
-| **HQC**                | Hamming Quasi-Cyclic: Code-based post-quantum encryption scheme, selected by NIST in 2025 for backup standardization. |
-| **HSM**                | Tamper-resistant device for cryptographic keys.                                                  |
+| Term | Definition |
+|---|---|
+| **AppSec (Application Security)** | Secures application code, APIs, and runtime logic; enforces secure coding and mitigates injection, session hijack, and privilege escalation. |
+| **azp** | Authorized party claim in JWTs for delegated flows. |
+| **CACAO playbook** | JSON-based incident-response workflow spec (OASIS). |
+| **Chain-of-thought (CoT)** | Intermediate reasoning tokens that may expose logic or PII. |
+| **Confused-Deputy** | Authentication flaw where a legitimate agent misuses its authority. |
+| **COSE_Sign1** | CBOR Object Signing and Encryption single-signature envelope. |
+| **Compliance (Compliance and Risk Management)** | Oversees regulatory adherence; manages data governance and audit readiness (e.g., GDPR, HIPAA, EU AI Act). |
+| **Differential privacy** | Technique adding statistical noise to outputs. |
+| **DPoP** | OAuth proof-of-possession JWT bound to TLS connection. |
+| **EU AI Act** | EU regulation on AI, effective 2025 for high-risk systems. |
+| **HQC** | Hamming Quasi-Cyclic: Code‑based post‑quantum encryption scheme, selected by NIST in 2025 for backup standardization. |
+| **HSM** | Tamper-resistant device for cryptographic keys. |
 | **Indirect prompt injection** | Attack where malicious instructions are embedded in external content that the LM processes, causing unintended behavior. |
-| **JAR**                | JWT-Secured Authorization Request; a method to secure OAuth requests using JWTs.                 |
-| **Jailbreak attack**   | Exploit using carefully crafted prompts to bypass an LM's safety guardrails and content policies. |
-| **JTI**                | JWT ID; unique identifier for tokens to prevent replay.                                          |
-| **MINJA**              | Memory Injection Attack; poisoning of vector memory.                                             |
-| **ML-DSA**             | Module Lattice Digital Signature Algorithm; a post-quantum signature scheme.                     |
-| **OpenTelemetry**      | CNCF observability framework for traces & metrics.                                               |
-| **PAR**                | Pushed Authorization Requests; a technique to push OAuth parameters to the server.               |
-| **PKCE**               | Proof Key for Code Exchange; a security extension for OAuth authorization code flows.            |
-| **PQC**                | Post-Quantum Cryptography; algorithms resistant to quantum attacks.                              |
-| **Prompt injection**   | Exploit manipulating LM prompts to alter behavior.                                               |
-| **RAG**                | Retrieval-Augmented Generation; a technique to improve factuality in LLMs.                       |
-| **SBOM**               | Software Bill of Materials.                                                                      |
-| **TLS 1.3**            | Current TLS version with forward secrecy.                                                        |
-| **Token exchange**     | OAuth flow trading one token for a scoped token.                                                 |
-| **TPM quote**          | Signed PCR measurements attesting boot state.                                                    |
-| **Zero-Trust**         | Model eliminating implicit trust; each request is checked.                                       |
+| **JAR** | JWT‑Secured Authorization Request; a method to secure OAuth requests using JWTs. |
+| **Jailbreak attack** | Exploit using carefully crafted prompts to bypass an LM's safety guardrails and content policies. |
+| **JTI** | JWT ID; unique identifier for tokens to prevent replay. |
+| **MINJA** | Memory Injection Attack; poisoning of vector memory. |
+| **ML Eng (Machine Learning Engineering)** | Builds and safeguards ML models; prevents poisoning, extraction, and adversarial attacks while ensuring compliance. |
+| **ML‑DSA** | Module Lattice Digital Signature Algorithm; a post‑quantum signature scheme. |
+| **MITRE ATLAS** | Adversarial Threat Landscape for AI Systems—knowledge base of AI attack techniques, mitigations, and case studies. |
+| **NIST SP 800‑30** | *Guide for Conducting Risk Assessments*; qualitative/semi‑quantitative likelihood × impact scoring. |
+| **OpenTelemetry** | CNCF observability framework for traces & metrics. |
+| **PAR** | Pushed Authorization Requests; a technique to push OAuth parameters to the server. |
+| **PKCE** | Proof Key for Code Exchange; a security extension for OAuth authorization code flows. |
+| **PQC** | Post‑Quantum Cryptography; algorithms resistant to quantum attacks. |
+| **Prompt injection** | Exploit manipulating LM prompts to alter behavior. |
+| **RAG** | Retrieval‑Augmented Generation; a technique to improve factuality in LLMs. |
+| **SBOM** | Software Bill of Materials. |
+| **SRE (Site Reliability Engineering)** | Maintains infrastructure reliability and security; applies segmentation, runtime isolation, and DoS resilience. |
+| **TLS 1.3** | Current TLS version with forward secrecy. |
+| **Token exchange** | OAuth flow trading one token for a scoped token. |
+| **TPM quote** | Signed PCR measurements attesting boot state. |
+| **Zero‑Trust** | Model eliminating implicit trust; each request is checked. |
 
 ---
 
@@ -632,10 +648,12 @@ In this diagram, secure connections are only made outbound from operational syst
 16. **RFC 9700 – OAuth 2.0 Security BCP**
 17. **RFC 8705 – OAuth 2.0 Mutual-TLS Tokens**
 18. ISO/IEC 19464: Information technology — Advanced Message Queuing Protocol (AMQP) v1.0 specification
+19. MITRE ATLAS Knowledge Base — Adversarial Threat Landscape for Artificial-Intelligence Systems.
+20. NIST SP 800‑30 Rev. 1 — Guide for Conducting Risk Assessments. National Institute of Standards and Technology (NIST), 2012.
 
 ---
 
-## Appendix A — CACAO Playbook `PI-001-contain`
+## Annex A — CACAO Playbook `PI-001-contain`
 
 ```json
 {
@@ -703,13 +721,13 @@ In this diagram, secure connections are only made outbound from operational syst
 
 ---
 
-## Appendix B — MVCS Checklist CSV
+## Annex B — MVCS Checklist CSV
 
 *(full CSV shown in § 5)*
 
 ---
 
-## Appendix C — Reference Architectures
+## Annex C — Reference Architectures
 
 ### C.1 Layered Trust Boundaries in NLIP Traffic Flow
 
@@ -895,13 +913,13 @@ A circle means that the threat can be defeated in the RM.
 
 ---
 
-## Appendix D — OAuth & Token-Hardening Sequence Diagram
+## Annex D — OAuth & Token-Hardening Sequence Diagram
 
 *(diagram included in § 4.9 above)*
 
 ---
 
-## Appendix E — Compliance Mapping
+## Annex E — Compliance Mapping
 
 | Standard / Reg                           | Showstopper gaps?                                                                       |
 | ---------------------------------------- | --------------------------------------------------------------------------------------- |
