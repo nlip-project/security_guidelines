@@ -1,6 +1,6 @@
 # NLIP Security Guidelines and Best Practices
 
-**Last-Modified:** 2025-08-24 
+**Last-Modified:** 2025-08-26 
 **Status:** Revised working draft toward ECMA TC-56 ballot  
 **Audience:** Security engineers, SREs, architects, CISOs, and compliance teams deploying NLIP agents at enterprise-scale.
 
@@ -8,7 +8,7 @@
 
 ## 1  Introduction
 **Purpose:** Provide a pragmatic, auditable checklist for securing NLIP-based multi-agent systems to ensure enterprise-readiness.  
-**Scope:** Identity, transport, runtime behaviour, data storage, observability, governance, and incident response. Expanded to include regulatory-compliance mappings (e.g., EU AI Act), ethical considerations, and supply-chain enhancements based on 2025 best practices.  
+**Scope:** Identity, transport, runtime behavior, data storage, observability, governance, and incident response. Expanded to include regulatory-compliance mappings (e.g., EU AI Act), ethical considerations, and supply-chain enhancements based on 2025 best practices.  
 **Limitations:** Excludes foundation-model internals, physical-datacenter safeguards, and national export controls.
 
 ---
@@ -24,7 +24,7 @@
 
 ---
 
-## 3  Threat Reference Guide (enterprise examples & controls)
+## 3  Threat Reference Guide for NLIP and NLIP‑powered agentic systems
 
 Section 3 outlines a curated set of **external threats** that already exist in agentic systems, large language model deployments, and multi-tenant orchestration environments commonplace in enterprises. These threats are not hypothetical; they have been observed in the wild or demonstrated through public red-team exercises and academic literature. These threat profiles are designed to help implementers of NLIP and adjacent protocols recognize, prioritize, and mitigate risks that originate outside the control plane, including adversarial prompts, cross-agent impersonation, model extraction, and session hijack techniques. This reference is intended to guide enterprise security architects and product teams in aligning defensive controls to realistic attacker capabilities.
 
@@ -42,23 +42,33 @@ The following table summarizes these threats and their associated control owners
 
 **Legend:** High = ≥15; Medium = 9–14; Low = ≤8 (likelihood × impact)
 
-| Threat Category       | Likelihood | Impact | Overall Risk | Control Owner |
-|-----------------------|------------|--------|--------------|---------------|
-| 3.1 Prompt Injection      | 4          | 5      | High      | AppSec       |
-| 3.2 Supply-Chain Poisoning| 4          | 4      | High      | SRE          |
-| 3.3 Confused-Deputy       | 3          | 5      | High      | AppSec       |
-| 3.4 Inference Flooding    | 4          | 3      | Medium    | SRE          |
-| 3.5 Session Hijack        | 3          | 4      | Medium    | AppSec       |
-| 3.6 MINJA                 | 3          | 4      | Medium    | ML Eng       |
-| 3.7 Model Extraction      | 2          | 5      | Medium    | ML Eng       |
-| 3.8 Data-at-Rest Exposure | 3          | 4      | Medium    | SRE          |
-| 3.9 CoT Leakage           | 2          | 4      | Low       | AppSec       |
-| 3.10 Hallucination-Driven Fraud   | 3          | 5      | High      | ML Eng       |
-| 3.11 Data Governance       | 4          | 5      | High      | Compliance   |
-| 3.12 Multi-Tenancy         | 3          | 4      | Medium    | SRE          |
-| 3.13 Advanced Adversarial  | 3          | 4      | Medium    | ML Eng       |
-| 3.14 Malicious Reply       | 3          | 4      | Medium    | AppSec       |
-| 3.15 Human Factors         | 4          | 3      | Medium    | AppSec       |
+**NLIP Coupling:** **Strong / Medium / Weak** (how tightly the mitigation belongs in NLIP guidance)
+
+**Applicability legend:**
+- **P — NLIP Protocol‑Specific:** Exploits NLIP message semantics or mandatory exchanges.  
+- **PA — Protocol‑Adjacent:** Realized through NLIP usage (e.g., token forwarding) but not unique to NLIP.  
+- **AS — Agentic‑System:** Applies to any agent framework or LLM system, independent of transport.  
+- **DI — Deployment/Infrastructure:** Cluster, network, storage, or platform controls.  
+- **GR — Governance/Regulatory:** Policy, privacy, residency, and compliance obligations.
+
+| Threat Category                    | Likelihood | Impact | Overall Risk | Control Owner | Applicability | NLIP Coupling |
+|------------------------------------|------------|--------|--------------|---------------|---------------|---------------|
+| 3.1 Prompt Injection               | 4          | 5      | High         | AppSec        | AS            | Weak          |
+| 3.2 Supply‑Chain Poisoning         | 4          | 4      | High         | SRE           | DI            | Weak          |
+| 3.3 Confused‑Deputy                | 3          | 5      | High         | AppSec        | PA            | Medium        |
+| 3.4 Inference Flooding             | 4          | 3      | Medium       | SRE           | DI            | Weak          |
+| 3.5 Session Hijack                 | 3          | 4      | Medium       | AppSec        | PA            | Medium        |
+| 3.6 MINJA                          | 3          | 4      | Medium       | ML Eng        | AS            | Weak          |
+| 3.7 Model Extraction               | 2          | 5      | Medium       | ML Eng        | AS            | Weak          |
+| 3.8 Data‑at‑Rest Exposure          | 3          | 4      | Medium       | SRE           | DI            | Weak          |
+| 3.9 CoT Leakage                    | 2          | 4      | Low          | AppSec        | AS            | Medium        |
+| 3.10 Hallucination‑Driven Fraud    | 3          | 5      | High         | ML Eng        | AS            | Weak          |
+| 3.11 Data Governance               | 4          | 5      | High         | Compliance    | GR            | Weak          |
+| 3.12 Multi‑Tenancy                 | 3          | 4      | Medium       | SRE           | DI            | Weak          |
+| 3.13 Advanced Adversarial          | 3          | 4      | Medium       | ML Eng        | AS            | Weak          |
+| 3.14 Malicious Reply               | 3          | 4      | Medium       | AppSec        | AS            | Medium        |
+| 3.15 Human Factors                 | 4          | 3      | Medium       | AppSec        | AS            | Weak          |
+
 
 Each threat profile contains:
 
@@ -75,6 +85,12 @@ Each threat profile contains:
 
 **Risk Score:** 4x5=20 (High; common in user-facing agents).
 
+**Applicability:** AS
+
+**NLIP Coupling:** Weak
+
+**Why:** Common to any agent interface; NLIP mainly transports the manipulated content.
+
 **Controls:**
 
 - Deploy semantic firewall (regex plus small language-model scoring).
@@ -82,8 +98,8 @@ Each threat profile contains:
 - Log prompt and response with policy-violation flags.
 - Run CI red-team prompt tests (classic and emerging jailbreaks).
 - CACAO playbook -> PI-001-contain (sample JSON in Appendix A).
-- Integrate tools like Guardrails AI for automated validation.
-- Use concrete test harnesses such as JailbreakBench for benchmarking.
+- Integrate automated input/output validation tooling.
+- Use adversarial test harnesses to benchmark jailbreak resistance.
 - Add board KPI: <48 h post-jailbreak root-cause report.
 
 ### 3.2 Supply-Chain (Model/Tool) Poisoning
@@ -94,6 +110,12 @@ Each threat profile contains:
 
 **Risk Score:** 4x4=16 (Increasing due to open-source reliance; per 2025 predictions).
 
+**Applicability:** DI
+
+**NLIP Coupling:** Weak
+
+**Why:** Artifact integrity and runtime isolation are platform/deployment concerns.
+
 **Controls:**
 
 - Produce and verify SBOM for every model, dataset, and tool container.
@@ -102,7 +124,7 @@ Each threat profile contains:
 - Store artifact hashes in a secure metadata registry; verify at agent start-up.
 - Run automated static and dynamic scans on images; block critical vulnerabilities (as defined by CVE severity scores).
 - Isolate third-party tools in a seccomp-restricted or gVisor sandbox.
-- Incorporate CISA AI Data Security Guidance (May 2025): data encryption, digital signatures, provenance tracking, secure multi-party computation. Vet open-source models via Hugging Face safety checks. Regularly assess dependencies for vulnerabilities.
+- Incorporate CISA AI Data Security Guidance (May 2025): data encryption, digital signatures, provenance tracking, secure multi‑party computation. Vet open‑source models via repository‑provided safety checks. Regularly assess dependencies for vulnerabilities.
 - Specify HSM-backed signing for key custody, rotation every 90 days, and conduct compromise drills.
 - Critical CVE patch ≤ 7 days, medium ≤ 30 days, low ≤ 90 days (clock starts at CVE publication or vendor advisory—whichever first).
 - Include AI vendor assessments in CI/CD and procurement processes: conduct security posture reviews, require contractual security policies, enforce breach-notification terms, and monitor supplier compliance continuously.
@@ -115,14 +137,19 @@ Each threat profile contains:
 
 **Risk Score:** 3x5=15 (Prevalent in multi-agent chains).
 
+**Applicability:** PA
+
+**NLIP Coupling:** Medium
+
+**Why:** Realized through NLIP agent chains and token forwarding patterns, but not unique to NLIP.
+
 **Controls:**
 
 - Enforce token-exchange pattern: never forward end-user tokens downstream; mint scoped tokens instead. This ensures that tokens are purpose-specific and cannot be misused across services.
-- Use audience (aud) restriction and delegation claim (act) in JWTs. This prevents unauthorized use of tokens by unintended services.
+- Validate audience (aud) and include **actor** (act) for delegated flows; azp MAY be present for OIDC compatibility. This prevents unauthorized use of tokens by unintended services.
 - Validate proof-of-possession (DPoP or mTLS-bound tokens). These tokens require the client to prove it possesses a private key or certificate, making it harder for attackers to reuse stolen tokens.
-- Strip Authorization headers across trust boundaries (e.g. public to internal domain); remove existing auth headers and regenerate auth context. This prevents token leakage
+- Strip Authorization headers across trust boundaries (e.g. public to internal domain); remove existing auth headers and regenerate auth context. This prevents token leakage.
 - Alert on privilege-escalation patterns (role mismatch, scope widening).
-- Mandate token binding per RFC 8471 for all flows to defend against token passthrough.
 
 ### 3.4 Unauthenticated Inference Flooding (Cost-Amplification DoS)
 
@@ -132,6 +159,12 @@ Each threat profile contains:
 
 **Risk Score:** 4x3=12 (Rising with AI costs).
 
+**Applicability:** DI
+
+**NLIP Coupling:** Weak
+
+**Why:** Capacity, routing, and cost controls sit at gateways and infra layers.
+
 **Controls:**
 
 - Require API key or OAuth for any endpoint invoking more than one vCPU-second per call. This ensures that only authenticated users can trigger expensive operations.
@@ -140,7 +173,7 @@ Each threat profile contains:
 - Cache idempotent inference results behind CDN when feasible. This reduces redundant compute and improves latency for common queries.
 - Export cost metrics to SIEM; alert on spikes greater than two times baseline. 
 - Implement budget alerts and quota enforcement via cloud billing APIs.
-- Integrate with WAFs like Cloudflare AI Gateway for bot detection.
+- Integrate with a cloud WAF / bot‑mitigation gateway for automated detection.
 
 ### 3.5 Session Hijack
 
@@ -150,10 +183,16 @@ Each threat profile contains:
 
 **Risk Score:** 3x4=12 (Common in remote work).
 
+**Applicability:** PA
+
+**NLIP Coupling:** Medium
+
+**Why:** Session/token misuse affects NLIP‑backed endpoints but is not NLIP‑exclusive.
+
 **Controls:**
 
-- Use Secure, HttpOnly, SameSite=strict cookies or DPoP-bound bearer tokens. Prefer DPoP-bound bearer tokens that require proof-of-possession for reuse.
-- Enforce mTLS or WebSocket sub-protocol with per-message MAC over TLS to ensure message integrity.
+- Use Secure, HttpOnly, SameSite=Strict cookies or DPoP-bound bearer tokens. Prefer DPoP-bound bearer tokens that require proof-of-possession for reuse.
+- Enforce mTLS or use a JOSE/COSE message-level signature/MAC over WebSocket in addition to TLS for end-to-end integrity.
 - Detect IP/ASN or device-fingerprint changes; force re-authentication if anomalies are detected.
 - Rotate session tokens on privilege elevation; inactivity 15 minutes, absolute eight hours.
 - Store tokens in memory-only storage or secure enclaves to prevent disk-based theft.
@@ -169,6 +208,12 @@ Each threat profile contains:
 **Enterprise example:** User uploads a crafted FAQ PDF; support agent ingests embeddings and later recommends a phishing URL.
 
 **Risk Score:** 3x4=12 (Emerging with vector DBs).
+
+**Applicability:** AS
+
+**NLIP Coupling:** Weak
+
+**Why:** Poisoned knowledge stores steer agent behavior regardless of transport protocol.
 
 **Controls:**
 
@@ -187,6 +232,12 @@ Each threat profile contains:
 
 **Risk Score:** 2x5=10 (Sophisticated but impactful).
 
+**Applicability:** AS
+
+**NLIP Coupling:** Weak
+
+**Why:** Query abuse and output analysis target the model surface, not NLIP semantics.
+
 **Controls:**
 
 - Limit the number of queries per user/IP. Randomly subsample logits to reduce the fidelity of outputs available to attackers.
@@ -203,14 +254,20 @@ Each threat profile contains:
 
 **Risk Score:** 3x4=12 (Internal threats common).
 
+**Applicability:** DI
+
+**NLIP Coupling:** Weak
+
+**Why:** Rest‑encryption, keying, and retention are storage/platform responsibilities.
+
 **Controls:**
 
 - Envelope-encrypt embeddings and backups. This allows for fine-grained key rotation and auditability.
 - Require AES-256 at rest with customer-managed keys to retain control over key lifecycle and access.
 - Apply row-level ACLs in multi-tenant databases to prevent cross-tenant data leakage.
-- Auto-purge logs after 30 days unless retained for legal hold. This reduces the risk of long-term exposure from stale or forgotten logs.
+- Default retention: 30 days. Optional forensic/hold tiers: 90 or 180 days (explicit enablement required). This reduces the risk of long-term exposure from stale or forgotten logs.
 - Specify key rotation automation via AWS KMS or equivalent to enforce rotation without downtime.
-- Offer configurable retention tiers (e.g., 90–180 days for forensic needs); call out trade-off with storage cost (default tier: 90 days).
+- Offer configurable retention tiers (90 or 180 days) for forensic/legal hold; default remains 30 days.
 - For Azure/GCP analogues: Use Azure Blob immutability policies or GCP Bucket Lock for multi-cloud parity.
 
 ### 3.9 Chain-of-Thought Leakage
@@ -220,6 +277,12 @@ Each threat profile contains:
 **Enterprise example:** Finance agent returns behind-the-scenes audit notes via an "assistant_debug" field.
 
 **Risk Score:** 2x4=8 (Accidental leaks).
+
+**Applicability:** AS
+
+**NLIP Coupling:** Medium
+
+**Why:** Primarily an agent output concern; NLIP can carry redaction and labeling signals.
 
 **Controls:**
 
@@ -237,13 +300,19 @@ Each threat profile contains:
 
 **Risk Score:** 3x5=15 (High visibility impact).
 
+**Applicability:** AS
+
+**NLIP Coupling:** Weak
+
+**Why:** Factuality/grounding and approval flows are model/app governance issues.
+
 **Controls:**
 
-- Implement output guardrails (factuality checker, retrieval cross-validation). Implement RAG (Retrieval-Augmented Generation) pipelines that ground outputs in trusted data sources
+- Implement output guardrails (factuality checker, retrieval cross-validation) and implement RAG (Retrieval-Augmented Generation) pipelines that ground outputs in trusted data sources.
 - Require human approval for high-impact communications that could impact financial markets, legal standing, or public perception.
 - Real-time alert when confidence score is below threshold. Prompt for human intervention.
 - Track RAG metrics such as grounding ratio and retrieval precision. Use quantitative SLOs (Service Level Objectives) for factuality and toxicity.
-- Reference benchmarks like JailbreakBench to evaluate model robustness against adversarial prompting and hallucination.
+- Use adversarial evaluation suites to assess robustness against prompting and hallucination.
 
 ### 3.11 Data Governance and Privacy
 
@@ -252,6 +321,12 @@ Each threat profile contains:
 **Enterprise example:** An EU HR‑support agent built on NLIP uses retrieval over an untagged vector store; when answering a payroll query it logs the full prompt/response—including employee names, national IDs, and salaries—to a centralized observability service replicated to a US region. The missing data‑classification tags and lack of redaction breach GDPR Art. 5/32/44 (lawfulness, security, and cross‑border transfers), triggering the controller’s 72‑hour notification obligation.
 
 **Risk Score:** 4x5=20 (Regulatory scrutiny increasing).
+
+**Applicability:** GR
+
+**NLIP Coupling:** Weak
+
+**Why:** Regulatory duties (GDPR/CCPA/HIPAA/EU AI Act) apply irrespective of transport protocol.
 
 **Controls:**
 
@@ -279,6 +354,12 @@ Each threat profile contains:
 
 **Risk Score:** 3x4=12 (Cloud-native risks).
 
+**Applicability:** DI
+
+**NLIP Coupling:** Weak
+
+**Why:** Tenant boundary, keys, and quotas are enforced at cluster/network/storage layers.
+
 **Controls:**
 
 - Implement role-based access control (RBAC) that respects tenant boundaries. Use namespace isolation in Kubernetes or similar platforms to prevent cross-tenant access.
@@ -296,6 +377,12 @@ Each threat profile contains:
 
 **Risk Score:** 3x4=12 (Emerging in 2025).
 
+**Applicability:** AS
+
+**NLIP Coupling:** Weak
+
+**Why:** Adversarial robustness is a model/ML pipeline property independent of NLIP.
+
 **Controls:**
 
 - Implement adversarial robustness testing in CI/CD to simulate jailbreaks and perturbations.
@@ -304,12 +391,13 @@ Each threat profile contains:
 - Reference MITRE ATLAS 2025 updates (expanded ATT&CK mappings).
 - Conduct red-team evaluations to simulate adversarial scenarios. Scorecards should track drift, bias, and security posture over time
 
-### 3.14 Malicious Reply
+### 3.14 Malicious Reply (Agent→Agent)
+
 **Vulnerability:** Malicious reply sent to an agent results in unwanted/unsafe behavior of the agent. 
 
 In multi-agent systems, one agent may send a reply that contains malicious instructions, data injections, or misleading information to another agent. This can occur either because the sending agent is compromised, is under adversarial influence, or has been intentionally configured to cause harm. Such attacks can lead to workflow corruption, data exfiltration, privilege escalation, or unauthorized actions by the receiving agent.
 
-**Enterprise Example:** Agent A sends a structured booking confirmation to Agent B, which is making a reservation for an employee, but includes an additional hidden instruction, e.g.,
+**Enterprise example:** Agent A sends a structured booking confirmation to Agent B, which is making a reservation for an employee, but includes an additional hidden instruction, e.g.,
 
 
 ```json
@@ -319,7 +407,13 @@ In multi-agent systems, one agent may send a reply that contains malicious instr
 }
 ```
 
-**Risk Score:** 3x4=12 (Emerging in 2026).
+**Risk Score:** 3x4=12 (Emerging; increasing prevalence in multi-agent deployments).
+
+**Applicability:** AS
+
+**NLIP Coupling:** Medium
+
+**Why:** Emerges from agent coordination; NLIP schemas/manifests can help constrain messages.
 
 **Controls:** 
 - Schema-Enforced Communication: All messages between agents must adhere to a predefined schema specifying allowed fields, formats, and value ranges. Any unrecognized fields or commands should be automatically rejected or flagged for human review.
@@ -339,6 +433,12 @@ In multi-agent systems, one agent may send a reply that contains malicious instr
 
 **Risk Score:** 4x3=12 (Common oversight).
 
+**Applicability:** AS
+
+**NLIP Coupling:** Weak
+
+**Why:** People, process, and workflow risks exist regardless of protocol.
+
 **Controls:**
 
 - Conduct security awareness training on prompt engineering and AI ethics. Emphasize the risks of embedding secrets in prompts or logs.
@@ -346,6 +446,8 @@ In multi-agent systems, one agent may send a reply that contains malicious instr
 - Enforce peer reviews for all AI-related code, especially prompts and model configurations. Catch hardcoded secrets, insecure logic, and unvalidated inputs early.
 - Implement insider threat monitoring with behavioral analytics. Use User and Entity Behavior Analytics (UEBA) to detect anomalies. Monitor for unusual access patterns, prompt modifications, or data exfiltration.
 - Embed secure-prompt-training completion KPI (≥ 95 % staff).
+
+The following section 4 defines the Minimal Viable Control Set (MVCS) designed to mitigate the threats outlined above. Each control is labeled (e.g., ID-1, TR-1) and is further operationalized through the implementation checklist in Annex B.
 
 ---
 
@@ -360,11 +462,11 @@ This section addresses risks related to identity spoofing, token misuse, and ses
 | **ID-1**  | P0       | **MUST** enforce **PKCE (S256)** on all OAuth authorization-code flows, including confidential clients.              | Prevents interception of authorization codes, even for confidential clients. |
 | **ID-2**  | P0       | **MUST** use **JAR (RFC 9101)** *or* **PAR (RFC 9126)**; raw query-parameter requests **MUST NOT** be accepted.      | Prevents tampering by securing request parameters in signed JWTs or pushed authorization requests. |
 | **ID-3**  | P0       | If a static client ID is unavoidable, the proxy **MUST** re-prompt for consent or bind the request via JAR/PAR.     | Ensures user awareness and request integrity when static client IDs are used. |
-| **ID-4**  | P0       | **MUST** validate `aud` == self **AND** an `azp` claim for delegated flows; reject otherwise.                        | Prevents token misuse by enforcing audience and authorized party checks. |
+| **ID-4**  | P0       | MUST validate aud == self; for delegated flows, tokens MUST carry an actor claim (act) and it MUST be validated. azp MAY be accepted for OIDC compatibility.                        | Prevents token misuse by enforcing audience and authorized party checks. |
 | **ID-5**  | P0       | **MUST** issue **sender-constrained** tokens via **DPoP (RFC 9449)** or **mTLS (RFC 8705)** in production. Applies to both interactive and service-to-service flows. | Ensures tokens are bound to the client that requested them, mitigating replay attacks. |
 | **ID-6**  | P0       | Refresh tokens **MUST** employ rotate-and-revoke on every redemption.                                                | Prevents long-lived token abuse and supports secure session renewal. |
 | **ID-7**  | P0       | Bearer-token lifetime ≤ 10 minutes; longer-lived tokens **MUST** be sender-constrained.                                  | Reduces exposure window for bearer tokens; longer-lived tokens must be bound to sender. |
-| **ID-8**  | P0       | Session IDs **MUST NOT** be used for authentication; use stateless JWT/opaque refs bound by ID-4/ID-5.                        | Avoids session ID reuse and enforces stateless, verifiable authentication. |
+| **ID-8**  | P0       | Session IDs MUST NOT be used as bearer credentials across service boundaries. If a browser session cookie is used, it MUST be Secure; HttpOnly; SameSite=Strict, MUST NOT be forwarded downstream, and MUST be exchanged for stateless JWT/opaque references bound by ID-4/ID-5 at service boundaries.                        | Avoids session ID reuse and enforces stateless, verifiable authentication. |
 | **ID-9**  | P1       | Cookies carrying tokens **MUST** set `Secure; HttpOnly; SameSite=Strict`.                                            | Protects tokens from XSS and CSRF attacks by enforcing secure cookie attributes. |
 | **ID-10** | P1       | **MUST** log `sub, aud, azp, jti, client_id, jkt` for every token issuance and redemption.                             | Enables traceability and auditability of token lifecycle events. |
 
@@ -385,12 +487,15 @@ NLIP integrates these controls into its identity architecture:
 
 This section addresses confidentiality, authenticity, and integrity of messages in transit, especially in multi-agent and federated environments.
 
-- NLIP mandates Transport Layer Security (TLS) version 1.3 for all communications. Cipher suites must be explicitly pinned to prevent downgrade attacks or weak encryption. This ensures forward secrecy and resistance to adversary-in-the-middle threats
-- Messages must be signed using COSE_Sign1 (CBOR Object Signing and Encryption) or detached JWS (JSON Web Signature). This guarantees message authenticity and integrity, even if the transport layer is compromised
+- Endpoints MUST propagate W3C Trace Context (traceparent, tracestate) end-to-end and map it to OpenTelemetry spans.
+- NLIP mandates Transport Layer Security (TLS) version 1.3 for all communications. Only TLS 1.3 cipher suites are permitted: TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384, TLS_CHACHA20_POLY1305_SHA256. Disable TLS 1.2. This ensures forward secrecy and resistance to adversary-in-the-middle threats.
+- Messages must be signed using COSE_Sign1 (CBOR Object Signing and Encryption) or detached JWS (JSON Web Signature). This guarantees message authenticity and integrity, even if the transport layer is compromised.
 - Replay-nonce cache (five minutes) and expiration less than or equal to 300 seconds. This prevents attackers from reusing intercepted messages or tokens.
 - Prepare for post-quantum cryptography (PQC): Use hybrid TLS with NIST-finalized algorithms (e.g., ML-KEM based on CRYSTALS-Kyber, finalized Aug 2024).
-- Note that DPoP uses ES256/PS256; plan to migrate to PQC-safe JWS alg when standardised.
+- DPoP proofs MUST use an asymmetric JOSE algorithm (e.g., ES256 or EdDSA); symmetric algorithms MUST NOT be used.
+- DPoP proofs MUST have unique jti per (key, method, URL) and an age ≤ 300s; servers MUST enforce a replay cache for jti within that window.
 - Add optional composite (ECDSA + ML-DSA / Dilithium) signature guidance; cite FIPS 204 (finalized 13 Aug 2024).
+- Signatures MUST include a key identifier (kid) and verifiers MUST enforce key rotation ≥ every 90 days. For JWS, kidorx5t#S256 MUST be present; for COSE, kid MUST be in the protected header. Only protected headers are accepted by verifiers. Signed payloads MUST carry exp(≤300s) andnbf claims or equivalent.
 
 ### 4.3 Runtime and Behavior Controls
 
@@ -398,7 +503,7 @@ The following controls are designed to limit, monitor, and validate agent behavi
 
 - Semantic firewall and jailbreak tests. These are part of NLIP’s red-team CI pipeline and CACAO playbooks for containment.
 - Tool allow-list enforced by manifest. This prevents unauthorized tool invocation and enforces role-based access. Violations are logged and flagged for review.
-- Recursion depth five; prompt length eight thousand tokens. This prevents runaway loops and excessive memory or compute usage. These limits are enforced dynamically based on task complexity and risk level.
+- Defaults: recursion depth ≤ 5; context window ≤ 8k tokens. Changes require documented risk tier elevation + additional monitoring gates (cost + tool-call anomaly alerts).
 - CPU, GPU, and memory quotas per agent. Each agent is assigned resource quotas to prevent noisy-neighbor effects and denial-of-service scenarios. Quotas are enforced at the container or orchestration layer (e.g., Kubernetes).
 - Tie recursion limits to dynamic risk assessments. This allows more flexibility for trusted agents while containing risky behavior.
 
@@ -408,17 +513,17 @@ This section focuses on protecting sensitive credentials and ensuring integrity 
 
 - Secrets must be stored in Hardware Security Modules (HSM) or Key Management Services (KMS) to ensure tamper-proof protection. This aligns with enterprise-grade security and compliance requirements.
 - Secrets should be rotated automatically every 90 days, or immediately upon detection of compromise. This reduces the window of exposure and supports zero-trust principles.
-- Certificate Revocation Lists (CRL) or Online Certificate Status Protocol (OCSP) stapling must be used to validate certificate status during TLS handshakes. This prevents use of revoked credentials in CI/CD flows
+- Certificate Revocation Lists (CRL) or Online Certificate Status Protocol (OCSP) stapling must be used to validate certificate status during TLS handshakes. This prevents use of revoked credentials in CI/CD flows.
 - All build artifacts must be signed using https://github.com/sigstore/cosign. CI pipelines must fail builds if unsigned images are detected, enforcing provenance and integrity.
-- Kubernetes admission controller blocks unsigned or critical-CVE images. This ensures runtime environments only deploy verified and secure containers.
-- Software Bill of Materials (SBOM) hashes must be verified at container start-up to detect late-stage tampering. This is critical for runtime integrity and aligns with supply chain security standards
-- Add benchmark numbers & suggestion to warm-pool images (e.g., start-up hash check can impact autoscaling with ~100–300 ms/image latency; reference: <https://medium.com/@himanshu675/your-docker-images-are-lying-to-you-the-alarming-truth-about-sbom-validation-in-spring-boot-644dc5fef84a> & mirror the data in an internal wiki).
+- Require SLSA v1.0 Level 3+ provenance with in-toto attestations for all build artifacts; verify attestations at deploy.
+- Kubernetes admission controller blocks unsigned images, images missing SLSA/in-toto provenance, and artifacts listed in CISA KEV or with EPSS ≥ 0.5, in addition to CVSS High/Critical. This ensures runtime environments only deploy verified and secure containers.
+- Software Bill of Materials (SBOM) hashes must be verified at container start-up to detect late-stage tampering. This is critical for runtime integrity and aligns with supply chain security standards.
 
 ### 4.5 Remote Attestation
 
 Remote attestation is a security mechanism that allows systems to prove their integrity to a verifier, typically before executing sensitive workloads or joining a trusted network. It’s especially critical in multi-agent and cloud-native environments where agents may run on ephemeral or distributed infrastructure.
 
-- TPM quote on boot signed by enterprise CA. This helps detect tampering at the firmware or bootloader level.
+- TPM quote on boot signed by enterprise CA. This helps detect tampering at the firmware or bootloader level. Attestation results MUST be bound to workload identity and logged to SIEM.
 - Hash check of binaries before service start. This ensures that no unauthorized modifications occurred post-deployment.
 - Audit log entry if checksum deviates. This supports forensic analysis and compliance with integrity monitoring policies.
 - Optional Intel TDX / AMD SEV-SNP guest report for VM isolation (see threat 3.8). These technologies provide hardware-backed isolation and cryptographic reports of VM state. This is especially relevant to threat 3.8 Data-at-Rest Exposure, where VM-level isolation protects vector stores and logs.
@@ -428,35 +533,36 @@ Remote attestation is a security mechanism that allows systems to prove their in
 
 This section supports business imperatives that NLIP agents and services are: traceable across multi-agent chains; auditable for compliance and forensic needs; cost-aware to prevent budget overruns; and secure against data leakage and anomalous behavior.
 
-- NLIP-Trace-ID header propagated across agent chain. This enables end-to-end traceability for debugging, cost attribution, and anomaly detection.
-- Structured JSON logs to SIEM; encrypted at rest; 30-day retention for centralized monitoring and alerting. 
+- Propagate W3C Trace Context (traceparent, tracestate) across the agent chain. This enables end-to-end traceability for debugging, cost attribution, and anomaly detection.
+- Structured JSON logs to SIEM; encrypted at rest; default retention 30 days. Optional 90 or 180-day tiers ONLY when explicitly enabled for forensics/legal hold. 
 - Distributed trace sampling one to five percent; ensuring observability without compromising performance.
 - PII and secret scrubbing hooks on log and trace emit. This prevents accidental data leakage and supports compliance with privacy regulations.
 - Real-time anomaly detection on trace spans (unexpected tool or cost spike) enables rapid investigation.
 - Merkle-root signed batch every 24 hours (optional sub-minute); provides tamper-evident audit trails for forensic integrity.
-- Integrate with tools like Splunk or Datadog; providing dashboards, alerting, log search, and cost visulization.
-- Cost metrics `nlip_inference_cost_usd_total`, `nlip_prompt_tokens_total`; support budget tracking, cost optimization, and chargeback models.
-- Define SOC KPIs: MTTD < 5 min for token-aud mismatch; MTTR < 30 min for revoked credential redeploy (clock starts at first security-team acknowledgement).
+- Integrate with tools like Splunk or Datadog; providing dashboards, alerting, log search, and cost visualization.
+- Emit nlip_inference_cost_usd_total and nlip_prompt_tokens_total; alert on >200% of rolling 7-day baseline OR absolute spend breach per tenant/route (configurable).
+- Define SOC KPIs: MTTD < 5 min for token-aud mismatch; MTTR < 30 min for revoked credential redeploy (clock starts at first security-team acknowledgment).
 
 ### 4.7 Incident Response Hooks
 
 This section provides guidance how to detect, contain, and remediate security incidents in real time, with automation and cross-functional coordination.
 
-- CACAO (Collaborative Automated Course of Action Operations) playbooks for common incident types: PI-001: Prompt Injection, SCP-002: Supply Chain Compromise, DoS-003: Denial of Service, and INV-004: Credential Inversion or misuse. These playbooks define automated and manual steps for detection, containment, and recovery.
+- CACAO (Collaborative Automated Course of Action Operations) playbooks for common incident types: PI-001: Prompt Injection, SCP-002: Supply Chain Compromise, DoS-003: Denial of Service, and INV-004: Credential Inversion or misuse. These playbooks define automated and manual steps for detection, containment, and recovery. See Annex A for JSON examples of each.
 - Incident logs and forensic data are stored in write-once buckets with Merkle-root signing for integrity. PII redaction is applied based on jurisdictional requirements (e.g., GDPR, CCPA).
+- Before containment actions that alter state, snapshot affected logs/artifacts into an immutable bucket ("forensic freeze") and record Merkle root.
 - Extend CACAO to push revocation events into Okta/AAD and cloud-WAF ACLs automatically. This enables real-time credential invalidation and traffic blocking.
 - Record triage SLA for prompt-injection incidents: containment < 15 min; full remediation < 4 h. These SLAs are tracked in the SOC dashboard and tied to security team acknowledgment timestamps.
 - Conduct regular cross-functional tabletop exercises (involving legal, compliance, SRE, communications) to simulate incident scenarios, validate CACAO playbooks, and refine incident runbooks before live deployment.
 
 ### 4.8 AI Agent Lifecycle Management
 
-AI Agent Lifecycle Management refers to the end-to-end governance of AI agents. This lifecycle ensures agents are: designed ethically developed securely; deployed responsibly; monitored continuously; decommissioned cleanly. It mirrors traditional software lifecycle management but is adapted for agentic AI, which introduces unique challenges like autonomy, tool orchestration, and contextual reasoning.
+AI Agent Lifecycle Management refers to the end-to-end governance of AI agents. This lifecycle ensures agents are: designed ethically, developed securely; deployed responsibly; monitored continuously; decommissioned cleanly. It mirrors traditional software lifecycle management but is adapted for agentic AI, which introduces unique challenges like autonomy, tool orchestration, and contextual reasoning.
 
 - Define phases: Design, development, deployment, monitoring, decommissioning.
 - **Controls:** Secure decommissioning (data wipe, key revocation); version control for agents; ethical reviews at design.
 - **TCO Considerations:** Estimate costs for controls (e.g., sandboxing adds 20-30% cloud spend); tiered implementation model.
 
-### 4.9 OAuth & Token-Hardening Sequence Reference (Appendix D excerpt)
+### 4.9 OAuth & Token-Hardening Sequence Reference
 
 The following diagram provides a visual and procedural breakdown of a secure OAuth 2.1 flow using best-practice enhancements.
 
@@ -474,7 +580,7 @@ sequenceDiagram
     participant P as NLIP Proxy (static ID)
     participant AS as 3P Authz Server
 
-    Note over C,P: Legit PAR + PKCE + DPoP flow
+    Note over C,P: Valid PAR + PKCE + DPoP flow
     C->>P: Authorization request (client meta)
     P->>AS: PAR { client_id=P, client_meta }
     AS-->>P: request_uri (signed)
@@ -489,31 +595,38 @@ sequenceDiagram
 
 ---
 
-## 5  Implementation Checklist (Appendix B)
+## 5  Implementation Checklist
 
-```csv
-Control,Control Owner,Target Date,Status
-ID-1 PKCE enforced,AppSec,2025-08-05,Pending
-ID-2 PAR/JAR only,AppSec,2025-08-07,Pending
-ID-3 Static-ID consent guard,AppSec,2025-08-10,Pending
-ID-4 aud+azp validation,AppSec,2025-08-12,Pending
-ID-5 DPoP rollout,AppSec,2025-08-20,Pending
-ID-6 Refresh rotate+revoke,AppSec,2025-08-25,Pending
-ID-7 ≤10 min AT,AppSec,2025-08-25,Pending
-ID-8 Stateless sessions,AppSec,2025-09-01,Pending
-ID-9 Strict cookies,AppSec,2025-09-01,Pending
-ID-10 Token logs to SIEM,AppSec,2025-09-05,Pending
-mTLS between services,SRE,2025-08-01,Pending
-OAuth2.1 token exchange,AppSec,2025-08-05,In Progress
-Semantic firewall deployed,AppSec,2025-08-10,Pending
-SBOM + signatures in CI,SRE,2025-08-15,Pending
-NLIP-Trace-ID logging,SRE,2025-08-20,Pending
-CACAO playbooks imported,SRE,2025-08-25,Pending
-SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
-```
+Section 5 provides a management-level roll-up of the MVCS outlined in section 4. For the detailed auditable checklist with verification and evidence fields, see Annex B.
+
+| Control ID | Title (short)                            | Owner        | Priority | Target Environment | Due Date       | Status     |
+|------------|------------------------------------------|--------------|----------|--------------------|----------------|------------|
+| ID-1       | PKCE enforced (OAuth)                   | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ID-2       | JAR/PAR only (no raw requests)          | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ID-3       | Static-ID consent guard                 | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ID-4       | aud/act validation in tokens            | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ID-5       | Sender-constrained tokens (DPoP/mTLS)   | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ID-6       | Refresh tokens rotate+revoke            | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ID-7       | ≤10 min access tokens                   | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ID-8       | Stateless sessions (no SID auth)        | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ID-9       | Secure/HttpOnly cookies                 | AppSec       | P1       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ID-10      | Token logs to SIEM                      | AppSec       | P1       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| TR-1       | TLS 1.3 + COSE/JWS signing              | SRE          | P0       | Test/Prod          | [dd MMM yyyy]  | [In Prog.] |
+| RT-1       | Semantic firewall + jailbreak tests     | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| RT-2       | Tool allow-list manifest                | AppSec       | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| RT-3       | Recursion/prompt length limits          | AppSec       | P1       | Test/Prod          | [dd MMM yyyy]  | [Pending]  |
+| RT-4       | Resource quotas per agent               | SRE          | P1       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| ADV-1      | Adversarial robustness in CI/CD         | ML Eng/AppSec | P1 | Dev/Test/Prod | [dd MMM yyyy] | [Pending]  |
+| CI-1       | SBOM + signature enforcement            | SRE          | P0       | Dev/Test/Prod      | [dd MMM yyyy]  | [Pending]  |
+| AT-1       | TPM quote on boot                       | SRE          | P1       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| AT-2       | Binary hash check before service start  | SRE          | P0       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| OBS-1      | W3C Trace Context propagation (traceparent/tracestate)               | SRE          | P1       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| OBS-2      | SOC KPIs wired to alerts                | SRE          | P1       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| IR-1       | CACAO playbooks (PI, SCP, DoS, INV)     | SRE          | P1       | Prod               | [dd MMM yyyy]  | [In Prog.] |
+| LC-1       | Secure agent decommissioning            | AppSec/Comp. | P1       | Prod               | [dd MMM yyyy]  | [Pending]  |
+| LC-2       | Ethical review at design                | Comp./ML Eng | P1       | Design             | [dd MMM yyyy]  | [Pending]  |
 
 ---
-
 
 ## 6  Framework Mapping Appendix
 
@@ -535,17 +648,19 @@ SOC KPIs (MTTD/MTTR),SRE,2025-09-10,Pending
 | DE.DP-4 (Detect data leak)| Observability and CoT redaction |
 | RS.MI-1 (Mitigation)      | CACAO playbooks                 |
 | NIST AI RMF 1.0 (Map.Trust-1) | Ethical Governance          | 3.11 bias detection             |
+| DE.AE-1 (Anomalies detected) | W3C trace context + anomaly alerts (§4.6)  |
 
 ### 6.3 ISO/IEC 27002:2022 Mapping
 
 | Control    | MVCS Implementation              |
 |------------|----------------------------------|
 | 8.15 (Least privilege) | Narrow token scopes          |
-| 8.24 (Secure coding)   | CI red-team prompt tests     |
+| 8.28 (Secure coding)   | CI red-team prompt tests     |
 | 5.22 (Logging)         | Structured logs, Merkle-root integrity |
 | 8.24 (Use of cryptography) | COSE_Sign1 or detached JWS coverage |
 | 5.26 (Response to information security incidents) | CACAO playbooks |
 | 5.17 (Authentication information) | OAuth token exchange, ID-1 to ID-10 |
+| 8.9 (Configuration management) | SLSA provenance + admission control (§4.4) |
 
 ### 6.4 EU AI Act Mapping
 
@@ -595,14 +710,14 @@ In this diagram, secure connections are only made outbound from operational syst
 | Term | Definition |
 |---|---|
 | **AppSec (Application Security)** | Secures application code, APIs, and runtime logic; enforces secure coding and mitigates injection, session hijack, and privilege escalation. |
-| **azp** | Authorized party claim in JWTs for delegated flows. |
+| **azp** | Authorized party claim in JWTs for delegated flows. Primarily in OIDC; for delegated access in access tokens prefer 'act'. |
 | **CACAO playbook** | JSON-based incident-response workflow spec (OASIS). |
 | **Chain-of-thought (CoT)** | Intermediate reasoning tokens that may expose logic or PII. |
 | **Confused-Deputy** | Authentication flaw where a legitimate agent misuses its authority. |
 | **COSE_Sign1** | CBOR Object Signing and Encryption single-signature envelope. |
 | **Compliance (Compliance and Risk Management)** | Oversees regulatory adherence; manages data governance and audit readiness (e.g., GDPR, HIPAA, EU AI Act). |
 | **Differential privacy** | Technique adding statistical noise to outputs. |
-| **DPoP** | OAuth proof-of-possession JWT bound to TLS connection. |
+| **DPoP** | OAuth proof-of-possession using JOSE at the application layer to sender-constrain tokens (used over TLS, but not bound to the TLS session). |
 | **EU AI Act** | EU regulation on AI, effective 2025 for high-risk systems. |
 | **HQC** | Hamming Quasi-Cyclic: Code‑based post‑quantum encryption scheme, selected by NIST in 2025 for backup standardization. |
 | **HSM** | Tamper-resistant device for cryptographic keys. |
@@ -651,13 +766,26 @@ In this diagram, secure connections are only made outbound from operational syst
 15. **RFC 9449 – Demonstrating Proof-of-Possession (DPoP)**
 16. **RFC 9700 – OAuth 2.0 Security BCP**
 17. **RFC 8705 – OAuth 2.0 Mutual-TLS Tokens**
-18. ISO/IEC 19464: Information technology — Advanced Message Queuing Protocol (AMQP) v1.0 specification
-19. MITRE ATLAS Knowledge Base — Adversarial Threat Landscape for Artificial-Intelligence Systems.
-20. NIST SP 800‑30 Rev. 1 — Guide for Conducting Risk Assessments. National Institute of Standards and Technology (NIST), 2012.
+18. **RFC 8693** - Token Exchange
+19. **RFC 7009** - Token Revocation
+20. **RFC 9068** - JWT AT profile
+21. ISO/IEC 19464: Information technology — Advanced Message Queuing Protocol (AMQP) v1.0 specification
+22. NIST SP 800‑30 Rev. 1
+23. RFC 9052 / RFC 9053 — CBOR Object Signing and Encryption (COSE) / algorithms.
+24. RFC 7515 / RFC 7519 — JSON Web Signature (JWS) / JSON Web Token (JWT).
+25. W3C Trace Context — Recommendation for traceparent/tracestate.
+26. NIST SP 800-207 — Zero Trust Architecture.
+27. NIST SP 800-218 — Secure Software Development Framework (SSDF).
+28. SLSA v1.0 — Supply-chain Levels for Software Artifacts specification.
+29. in-toto Attestations — Provenance format (reference spec).
 
 ---
 
-## Annex A — CACAO Playbook `PI-001-contain`
+## Annex A — CACAO Playbooks
+
+This annex contains CACAO (Collaborative Automated Course of Action Operations) playbooks for common threats. Each is expressed in JSON format for machine-readable import into SOAR or orchestration tools. Playbooks PI-001, SCP-002, DoS-003, and INV-004 correspond to incident response hooks described in section 4.7.
+
+### A.1 PI-001 Prompt-Injection Containment
 
 ```json
 {
@@ -723,11 +851,626 @@ In this diagram, secure connections are only made outbound from operational syst
 }
 ```
 
+### A.2 SCP-002 — Supply-Chain Compromise
+
+```JSON
+{
+  "playbook": {
+    "id": "nlip.scp-002-contain.v1",
+    "version": "1.0",
+    "name": "Supply-Chain Compromise Containment",
+    "description": "Automated response for suspected or confirmed supply-chain compromise impacting NLIP agents, tools, models, or images.",
+    "author": { "name": "NLIP Security WG", "role": "standards-body" },
+    "created": "2025-08-24T00:00:00Z",
+    "modified": "2025-08-24T00:00:00Z",
+    "playbook_types": ["containment"],
+    "severity": "high",
+    "labels": ["supply-chain", "sbom", "cosign", "nlip", "containment"],
+    "workflow": {
+      "start": "freeze-ci",
+      "workflow_steps": {
+        "freeze-ci": {
+          "action": "CALL_API",
+          "description": "Pause CI/CD pipelines for affected projects",
+          "target": {
+            "type": "http",
+            "url": "https://ci.prod.internal/api/v1/projects/{project_id}/pause",
+            "method": "POST"
+          },
+          "next_steps": ["block-unsigned-images"]
+        },
+        "block-unsigned-images": {
+          "action": "CALL_API",
+          "description": "Tighten admission controller: block unsigned or critical-CVE images",
+          "target": {
+            "type": "http",
+            "url": "https://k8s.policy.internal/admission/policies/enforce",
+            "method": "POST",
+            "body": { "policy": "require_signature_and_cve_threshold", "cve_max_severity": "high" }
+          },
+          "next_steps": ["quarantine-registry-image"]
+        },
+        "quarantine-registry-image": {
+          "action": "CALL_API",
+          "description": "Quarantine suspicious image by digest in registry",
+          "target": {
+            "type": "http",
+            "url": "https://registry.prod.internal/v2/images/{image_repo}/manifests/{artifact_digest}/quarantine",
+            "method": "POST"
+          },
+          "next_steps": ["revoke-signing-key"]
+        },
+        "revoke-signing-key": {
+          "action": "CALL_API",
+          "description": "Disable cosign signing key material in KMS/HSM",
+          "target": {
+            "type": "http",
+            "url": "https://kms.prod.internal/keys/{cosign_key_id}:disable",
+            "method": "POST"
+          },
+          "next_steps": ["sbom-diff"]
+        },
+        "sbom-diff": {
+          "action": "CALL_API",
+          "description": "Generate and diff SBOM vs known-good baseline",
+          "target": {
+            "type": "http",
+            "url": "https://sbom.prod.internal/diff",
+            "method": "POST",
+            "body": { "artifact_digest": "{artifact_digest}", "baseline_id": "{baseline_id}" }
+          },
+          "next_steps": ["invalidate-cache"]
+        },
+        "invalidate-cache": {
+          "action": "CALL_API",
+          "description": "Purge deployment/image caches to prevent reuse",
+          "target": {
+            "type": "http",
+            "url": "https://cache.prod.internal/purge",
+            "method": "POST",
+            "body": { "scope": "images", "digest": "{artifact_digest}" }
+          },
+          "next_steps": ["notify-stakeholders"]
+        },
+        "notify-stakeholders": {
+          "action": "SEND_EMAIL",
+          "description": "Notify SecOps, SRE, AppSec, and procurement",
+          "recipients": ["secops@example.com", "sre@example.com", "appsec@example.com", "procurement@example.com"],
+          "subject": "NLIP SCP-002: Supply-Chain Containment Initiated ({incident_id})",
+          "body": "CI/CD paused for {project_id}. Image {artifact_digest} quarantined. Cosign key {cosign_key_id} disabled. See SOAR case {case_id}."
+        }
+      }
+    }
+  }
+}
+```
+
+### A.3 DoS-003 — Denial of Service / Cost Amplification
+
+```JSON
+{
+  "playbook": {
+    "id": "nlip.dos-003-mitigate.v1",
+    "version": "1.0",
+    "name": "Denial of Service / Cost Amplification Mitigation",
+    "description": "Automated mitigation for volumetric or application-layer DoS against NLIP endpoints, including inference flooding.",
+    "author": { "name": "NLIP Security WG", "role": "standards-body" },
+    "created": "2025-08-24T00:00:00Z",
+    "modified": "2025-08-24T00:00:00Z",
+    "playbook_types": ["containment", "mitigation"],
+    "severity": "high",
+    "labels": ["dos", "bot-mitigation", "rate-limit", "nlip"],
+    "workflow": {
+      "start": "enable-rate-limit",
+      "workflow_steps": {
+        "enable-rate-limit": {
+          "action": "CALL_API",
+          "description": "Tighten per-IP and per-credential rate limits on gateway",
+          "target": {
+            "type": "http",
+            "url": "https://gateway.prod.internal/rate-limits/update",
+            "method": "POST",
+            "body": { "endpoint_id": "{endpoint_id}", "ip_rps": 5, "token_rps": 10 }
+          },
+          "next_steps": ["enable-challenge"]
+        },
+        "enable-challenge": {
+          "action": "CALL_API",
+          "description": "Enable progressive challenge (CAPTCHA/PoW) for unauth traffic",
+          "target": {
+            "type": "http",
+            "url": "https://botwall.prod.internal/policies/{endpoint_id}/enable",
+            "method": "POST",
+            "body": { "mode": "progressive_challenge" }
+          },
+          "next_steps": ["circuit-breaker"]
+        },
+        "circuit-breaker": {
+          "action": "CALL_API",
+          "description": "Trip circuit breaker for unhealthy backend route if error rate exceeds threshold",
+          "target": {
+            "type": "http",
+            "url": "https://mesh.prod.internal/circuit/{service_name}/trip",
+            "method": "POST",
+            "body": { "error_rate_threshold": 0.25, "duration_sec": 300 }
+          },
+          "next_steps": ["block-bad-asn"]
+        },
+        "block-bad-asn": {
+          "action": "CALL_API",
+          "description": "Block malicious IPs/ASNs at WAF",
+          "target": {
+            "type": "http",
+            "url": "https://waf.prod.internal/acl/block",
+            "method": "POST",
+            "body": { "cidrs": ["{attacker_cidr}"], "asns": ["{attacker_asn}"], "ttl_minutes": 120 }
+          },
+          "next_steps": ["enable-caching"]
+        },
+        "enable-caching": {
+          "action": "CALL_API",
+          "description": "Cache idempotent responses at edge/CDN for hot paths",
+          "target": {
+            "type": "http",
+            "url": "https://edge.prod.internal/cache/rules",
+            "method": "POST",
+            "body": { "paths": ["/v1/health", "/v1/faq"], "ttl_sec": 300 }
+          },
+          "next_steps": ["notify-stakeholders"]
+        },
+        "notify-stakeholders": {
+          "action": "SEND_EMAIL",
+          "description": "Notify SRE, Finance (for cost spikes), and App teams",
+          "recipients": ["sre@example.com", "finops@example.com", "app-team@example.com"],
+          "subject": "NLIP DoS-003: Mitigations Applied ({incident_id})",
+          "body": "Rate limits tightened and challenges enabled on {endpoint_id}. Circuit breaker status: {status}. WAF blocks applied for {attacker_asn}/{attacker_cidr}."
+        }
+      }
+    }
+  }
+}
+```
+
+### A.4 INV-004 — Credential Inversion / Misuse
+
+```JSON
+{
+  "playbook": {
+    "id": "nlip.inv-004-contain.v1",
+    "version": "1.0",
+    "name": "Credential Inversion / Misuse Containment",
+    "description": "Automated response for credential inversion or misuse (e.g., confused-deputy, token passthrough, scope escalation) in NLIP chains.",
+    "author": { "name": "NLIP Security WG", "role": "standards-body" },
+    "created": "2025-08-24T00:00:00Z",
+    "modified": "2025-08-24T00:00:00Z",
+    "playbook_types": ["containment"],
+    "severity": "high",
+    "labels": ["credential-inversion", "confused-deputy", "oauth", "dpop", "nlip"],
+    "workflow": {
+      "start": "quarantine-agent",
+      "workflow_steps": {
+        "quarantine-agent": {
+          "action": "CALL_API",
+          "description": "Disable affected agent and revoke downstream trust",
+          "target": {
+            "type": "http",
+            "url": "https://registry.prod.internal/agents/{agent_id}/disable",
+            "method": "POST"
+          },
+          "next_steps": ["revoke-access-tokens"]
+        },
+        "revoke-access-tokens": {
+          "action": "CALL_API",
+          "description": "Revoke access and refresh tokens for implicated clients/agents",
+          "target": {
+            "type": "http",
+            "url": "https://auth.prod.internal/oauth/revoke",
+            "method": "POST",
+            "body": { "subject": "{sub}", "client_id": "{client_id}", "all_tokens": true }
+          },
+          "next_steps": ["enforce-token-exchange"]
+        },
+        "enforce-token-exchange": {
+          "action": "CALL_API",
+          "description": "Mandate OAuth Token Exchange + audience/azp checks for the route",
+          "target": {
+            "type": "http",
+            "url": "https://gateway.prod.internal/routes/{route_id}/auth/policy",
+            "method": "POST",
+            "body": { "require_token_exchange": true, "validate_aud_azp": true }
+          },
+          "next_steps": ["require-dpop"]
+        },
+        "require-dpop": {
+          "action": "CALL_API",
+          "description": "Require sender-constrained tokens (DPoP or mTLS) for affected clients",
+          "target": {
+            "type": "http",
+            "url": "https://auth.prod.internal/policy/clients/{client_id}",
+            "method": "POST",
+            "body": { "sender_constrained": "DPoP" }
+          },
+          "next_steps": ["strip-auth-headers"]
+        },
+        "strip-auth-headers": {
+          "action": "CALL_API",
+          "description": "Strip Authorization headers across trust boundary and re-mint scoped tokens",
+          "target": {
+            "type": "http",
+            "url": "https://gateway.prod.internal/boundary/{boundary_id}/headers",
+            "method": "POST",
+            "body": { "strip": ["Authorization"], "inject": ["NLIP-Scoped-Token"] }
+          },
+          "next_steps": ["notify-stakeholders"]
+        },
+        "notify-stakeholders": {
+          "action": "SEND_EMAIL",
+          "description": "Notify AppSec, IdP owners, and SRE of containment status",
+          "recipients": ["appsec@example.com", "idp-owners@example.com", "sre@example.com"],
+          "subject": "NLIP INV-004: Credential Inversion Contained ({incident_id})",
+          "body": "Agent {agent_id} quarantined. Tokens for sub {sub}/client {client_id} revoked. DPoP required. Boundary {boundary_id} strips Authorization and re-mints scoped tokens."
+        }
+      }
+    }
+  }
+}
+```
+
 ---
 
-## Annex B — MVCS Checklist CSV
+## Annex B — Implementation Checklist (Informative)
 
-*(full CSV shown in § 5)*
+This annex provides a structured checklist to operationalize the Minimal Viable Control Set (MVCS) and related security measures and is the authoritative checklist format. Section 5 summarizes this annex for executive use.
+
+---
+
+## How to Use
+
+- **By Role:** Filter checklist items by your role (AppSec, SRE, ML Eng, Compliance).  
+- **By Threat:** Map controls back to threat IDs in §3.  
+- **Tracking:** Populate `[Owner]`, `[Environment]`, `[Status]`, `[Due Date]`, and `[Audit Evidence]` with your local values.  
+- **Customization:** Add `LocalID` (e.g., `ORG-01`) for organization-specific controls.  
+
+---
+
+## Checklist Format
+
+Each item follows this structure:
+
+- **Control ID / Local ID**  
+- **Title**  
+- **Owner**  
+- **Priority**  
+- **Threats Mitigated**  
+- **Applicability / NLIP Coupling**  
+- **Environment**  
+- **Due Date**  
+- **Status**  
+- **Verification**  
+- **Audit Evidence**
+
+---
+
+## Identity & Authentication (§4.1)
+
+- **Control ID:** ID-1  
+  **Title:** Enforce PKCE (S256) on all OAuth authorization flows  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.3 Confused-Deputy, 3.5 Session Hijack  
+  **Applicability / NLIP Coupling:** PA / Medium  
+  **Environment:** [Dev | Test | Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Confirm PKCE required in AS config; run interception test  
+  **Audit Evidence:** [AS policy export]
+
+- **Control ID:** ID-2  
+  **Title:** Use JAR/PAR only (no raw query requests)  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.3, 3.5  
+  **Applicability / NLIP Coupling:** PA / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Auth requests without JAR/PAR rejected  
+  **Audit Evidence:** [Gateway logs]
+
+- **Control ID:** ID-3  
+  **Title:** Static-ID consent guard (bind via JAR/PAR)  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.3  
+  **Applicability / NLIP Coupling:** PA / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Consent re-prompt observed in flow  
+  **Audit Evidence:** [Consent records]
+
+- **Control ID:** ID-4  
+  **Title:** Validate `aud` == self and `azp` claim in delegated flows  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.3, 3.5  
+  **Applicability / NLIP Coupling:** PA / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Token validator enforces checks  
+  **Audit Evidence:** [Validator config]
+
+- **Control ID:** ID-5  
+  **Title:** Sender-constrained tokens (DPoP or mTLS)  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.3, 3.5  
+  **Applicability / NLIP Coupling:** PA / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Replay attempts fail with DPoP/mTLS binding  
+  **Audit Evidence:** [Token introspection]
+
+- **Control ID:** ID-6  
+  **Title:** Refresh tokens rotate-and-revoke  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.5  
+  **Applicability / NLIP Coupling:** PA / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Old refresh tokens invalid after use  
+  **Audit Evidence:** [AS logs]
+
+- **Control ID:** ID-7  
+  **Title:** Access tokens ≤ 10 minutes (longer must be sender-constrained)  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.3, 3.5  
+  **Applicability / NLIP Coupling:** PA / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Policy enforces AT lifetime  
+  **Audit Evidence:** [Token samples]
+
+- **Control ID:** ID-8  
+  **Title:** Stateless sessions (no SID as auth)  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.5  
+  **Applicability / NLIP Coupling:** PA / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** JWT or opaque refs only  
+  **Audit Evidence:** [Config]
+
+- **Control ID:** ID-9  
+  **Title:** Secure/HttpOnly/SameSite=Strict cookies  
+  **Owner:** AppSec  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.5  
+  **Applicability / NLIP Coupling:** PA / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Cookie attributes enforced  
+  **Audit Evidence:** [Browser devtools]
+
+- **Control ID:** ID-10  
+  **Title:** Token lifecycle logs to SIEM  
+  **Owner:** AppSec  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.3, 3.5, 3.15  
+  **Applicability / NLIP Coupling:** DI / Weak  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** SIEM captures `sub,aud,azp,jti,client_id,jkt`  
+  **Audit Evidence:** [SIEM dashboard]
+
+---
+
+## Transport & Message Integrity (§4.2)
+
+- **Control ID:** TR-1  
+  **Title:** TLS 1.3 with pinned ciphers; COSE/JWS signatures  
+  **Owner:** SRE  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.5, 3.14  
+  **Applicability / NLIP Coupling:** PA / Strong  
+  **Environment:** [Test | Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [In Progress]  
+  **Verification:** TLS scanner + signature verification  
+  **Audit Evidence:** [TLS report]
+
+---
+
+## Runtime & Behavior Controls (§4.3)
+
+- **Control ID:** RT-1  
+  **Title:** Semantic firewall + jailbreak CI tests  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.1 Prompt Injection, 3.10 Hallucination Fraud, 3.14 Malicious Reply, 3.15 Human Factors
+  **Applicability / NLIP Coupling:** AS / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Red-team corpus blocked  
+  **Audit Evidence:** [Filter config]
+
+- **Control ID:** RT-2  
+  **Title:** Tool allow-list enforced by manifest  
+  **Owner:** AppSec  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.3 Confused-Deputy, 3.14 Malicious Reply, 3.15 Human Factors  
+  **Applicability / NLIP Coupling:** AS / Medium  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Unauthorized tool calls blocked  
+  **Audit Evidence:** [Manifest]
+
+- **Control ID:** RT-3  
+  **Title:** Recursion depth ≤ 5; prompt length ≤ 8k tokens  
+  **Owner:** AppSec  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.1 Prompt Injection, 3.4 Inference Flooding, 3.15 Human Factors  
+  **Applicability / NLIP Coupling:** AS / Medium  
+  **Environment:** [Test | Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Limits enforced in runtime logs  
+  **Audit Evidence:** [Runtime config]
+
+- **Control ID:** RT-4  
+  **Title:** Resource quotas per agent (CPU/GPU/memory)  
+  **Owner:** SRE  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.4 Inference Flooding, 3.12 Multi-Tenancy  
+  **Applicability / NLIP Coupling:** DI / Weak  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Quotas enforced in orchestration layer  
+  **Audit Evidence:** [K8s config]
+
+- Control ID: ADV-1
+  Title: Adversarial robustness testing in CI/CD
+  Owner: ML Eng / AppSec
+  Priority: P1
+  Threats Mitigated: §3.13 Advanced Adversarial
+  Applicability / NLIP Coupling: AS / Weak
+  Environment: [Dev | Test | Prod]
+  Due Date: [dd MMM yyyy]
+  Status: [Pending]
+  Verification: Robustness tests run per release, report generated
+  Audit Evidence: [CI/CD pipeline logs, robustness dashboard]
+
+---
+
+## Supply Chain & CI/CD (§4.4)
+
+- **Control ID:** CI-1  
+  **Title:** SBOM generation + signature enforcement in CI/CD  
+  **Owner:** SRE  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.2 Supply-Chain Poisoning  
+  **Applicability / NLIP Coupling:** DI / Weak  
+  **Environment:** [Dev | Test | Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Unsigned images blocked  
+  **Audit Evidence:** [Pipeline logs]
+
+---
+
+## Remote Attestation (§4.5)
+
+- **Control ID:** AT-1  
+  **Title:** TPM quote on boot signed by enterprise CA  
+  **Owner:** SRE  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.2, 3.8  
+  **Applicability / NLIP Coupling:** DI / Weak  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** TPM attestation logs present  
+  **Audit Evidence:** [CA logs]
+
+- **Control ID:** AT-2  
+  **Title:** Hash check of binaries before service start  
+  **Owner:** SRE  
+  **Priority:** P0  
+  **Threats Mitigated:** 3.2  
+  **Applicability / NLIP Coupling:** DI / Weak  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Checksum mismatch triggers alert  
+  **Audit Evidence:** [Startup logs]
+
+---
+
+## Observability, Cost & Audit (§4.6)
+
+- **Control ID:** OBS-1  
+  **Title:** NLIP-Trace-ID propagated end-to-end  
+  **Owner:** SRE  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.5 Session Hijack, 3.14 Malicious Reply, 3.8 Data-at-Rest (trace-audit linkage)  
+  **Applicability / NLIP Coupling:** DI / Weak  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Trace spans stitched  
+  **Audit Evidence:** [Tracing UI]
+
+- **Control ID:** OBS-2  
+  **Title:** SOC KPIs (MTTD <5m, MTTR <30m) wired to alerts  
+  **Owner:** SRE  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.1 Prompt Injection, 3.2 Supply-Chain, 3.4 DoS, 3.5 Session Hijack, 3.10 Hallucination Fraud, 3.11 Data Governance  
+  **Applicability / NLIP Coupling:** DI / Weak  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Dashboards show KPI adherence  
+  **Audit Evidence:** [SOC dashboard]
+
+---
+
+## Incident Response (§4.7)
+
+- **Control ID:** IR-1  
+  **Title:** CACAO playbooks imported (PI-001, SCP-002, DoS-003, INV-004)  
+  **Owner:** SRE  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.1 Prompt Injection, 3.2 Supply-Chain, 3.4 DoS, 3.3/3.5 Credential Inversion & Session Hijack  
+  **Applicability / NLIP Coupling:** DI / Weak  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [In Progress]  
+  **Verification:** Simulated events trigger playbooks  
+  **Audit Evidence:** [SOAR runbook]
+
+---
+
+## AI Agent Lifecycle Management (§4.8)
+
+- **Control ID:** LC-1  
+  **Title:** Secure decommissioning (data wipe, key revocation)  
+  **Owner:** AppSec / Compliance  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.11 Data Governance, 3.15 Human Factors  
+  **Applicability / NLIP Coupling:** GR / Weak  
+  **Environment:** [Prod]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Keys revoked, agent data purged  
+  **Audit Evidence:** [Decommission logs]
+
+- **Control ID:** LC-2  
+  **Title:** Ethical review at design phase  
+  **Owner:** Compliance / ML Eng  
+  **Priority:** P1  
+  **Threats Mitigated:** 3.10 Hallucination Fraud, 3.11 Governance  
+  **Applicability / NLIP Coupling:** GR / Weak  
+  **Environment:** [Design]  
+  **Due Date:** [dd MMM yyyy]  
+  **Status:** [Pending]  
+  **Verification:** Ethics board sign-off documented  
+  **Audit Evidence:** [Review report]
+
+---
+
 
 ---
 
@@ -917,13 +1660,7 @@ A circle means that the threat can be defeated in the RM.
 
 ---
 
-## Annex D — OAuth & Token-Hardening Sequence Diagram
-
-*(diagram included in § 4.9 above)*
-
----
-
-## Annex E — Compliance Mapping
+## Annex D — Compliance Mapping
 
 | Standard / Reg                           | Showstopper gaps?                                                                       |
 | ---------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -931,7 +1668,48 @@ A circle means that the threat can be defeated in the RM.
 | **ISO 27001 / 27002 : 2022**             | Logging integrity (§ 4.6) meets 5.22; annex A rows covered.                             |
 | **NIST CSF 2.0 (draft)**                 | PR.PT-2 “Least functionality” satisfied via tool allow-list.                            |
 | **EU AI Act (draft text 10 Jul 2025)**   | GPAI, systemic-risk references present; multi-cloud note helps with Art. 52 resilience. |
-| **PCI DSS 4.0 (if payment agents used)** | All token-handling controls align; consider adding quarterly ASV scan requirement.      |
+| **PCI DSS 4.0 (if payment agents used)** | Out of scope unless NLIP is used in payment processing apps. All token-handling controls align; consider adding quarterly ASV scan requirement.      |
+
+---
+
+## Annex E — Applicability Taxonomy (informative)
+
+This annex explains how threats relate to NLIP itself versus the broader deployment context and governance.
+
+### E.1 P — NLIP Protocol‑Specific
+**Scope:** Abuses of NLIP message semantics, mandatory exchanges, or envelope/signature use.  
+**Mitigations live in:** NLIP spec text, reference profiles, conformance tests.  
+**Examples (future work):** Submessage token echo misuse; signature downgrade on NLIP envelopes; control/redirect field abuse.  
+**Typical owners:** TC‑56 editors, AppSec for protocol validation, implementers for conformance.  
+**NLIP ties:** Clarify field semantics; require signature/verification rules; negative tests in conformance suite.
+
+### E.2 PA — NLIP Protocol‑Adjacent
+**Scope:** Risks realized through NLIP usage patterns (e.g., token forwarding across agent chains, session handling), but not unique to NLIP.  
+**Mitigations live in:** §4.1 (identity), §4.2 (transport), implementation guidance, deployment patterns.  
+**Examples:** Confused‑deputy, session hijack, conversation‑token handling.  
+**Typical owners:** AppSec, platform teams.  
+**NLIP ties:** Strong guidance on token exchange, audience/azp checks, sender‑constrained tokens, conversation‑token handling.
+
+### E.3 AS — Agentic‑System
+**Scope:** Threats inherent to LLM/agent behavior and orchestration regardless of transport.  
+**Mitigations live in:** §4.3 runtime controls (semantic firewall, schema checks, recursion limits), testing and guardrails.  
+**Examples:** Prompt injection, MINJA, model extraction, CoT leakage, hallucination, malicious reply, human factors.  
+**Typical owners:** AppSec, ML Eng, product teams.  
+**NLIP ties:** Message labeling, signed responses, reference monitor patterns (Annex C.3) to enforce schemas and I/O policies.
+
+### E.4 DI — Deployment/Infrastructure
+**Scope:** Platform, network, storage, tenancy, and cost/rate limiting.  
+**Mitigations live in:** §4.4 secure CI/CD, §4.5 attestation, §4.6 observability & cost, §7 deployment.  
+**Examples:** Supply‑chain poisoning, inference flooding, data‑at‑rest exposure, multi‑tenancy.  
+**Typical owners:** SRE, platform/security operations.  
+**NLIP ties:** Telemetry propagation (Trace‑ID), cost metrics and policy hooks carried in NLIP messages.
+
+### E.5 GR — Governance/Regulatory
+**Scope:** Legal/regulatory duties (privacy, residency, breach notification, AI governance).  
+**Mitigations live in:** §4.6 retention/logging; §7 residency and zero‑trust deployment; Annex D mappings (GDPR/CCPA/HIPAA/EU AI Act).  
+**Examples:** Data governance & privacy.  
+**Typical owners:** Compliance, data governance, legal.  
+**NLIP ties:** No spec change; ensure NLIP deployments expose sufficient audit/trace context and support policy enforcement endpoints.
 
 ---
 
