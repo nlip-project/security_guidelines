@@ -628,51 +628,7 @@ Section 5 provides a management-level roll-up of the MVCS outlined in section 4.
 
 ---
 
-## 6  Framework Mapping Appendix
-
-### 6.1 MITRE ATLAS Mapping (excerpt)
-
-| Threat ID       | NLIP Threat             | MVCS Control                          |
-|-----------------|-------------------------|---------------------------------------|
-| AML.T0059       | Prompt Injection        | 3.1 semantic firewall, tool allow-list |
-| AML.T0011       | Supply-Chain Poisoning  | 3.2 SBOM, signature, hermetic builds  |
-| AML.T0023       | Model Extraction        | 3.7 rate-limit, perturbation, watermark |
-| AML.T0058       | Advanced Adversarial    | 3.13 robustness testing               |
-
-### 6.2 NIST CSF 2.0 Mapping
-
-| CSF Function.Sub-Category | MVCS Control                    |
-|---------------------------|---------------------------------|
-| ID.AM-1 (Asset inventory) | SBOM, tool manifest             |
-| PR.AC-4 (Access control)  | OAuth 2.1 token exchange, ID-1 to ID-10        |
-| DE.DP-4 (Detect data leak)| Observability and CoT redaction |
-| RS.MI-1 (Mitigation)      | CACAO playbooks                 |
-| NIST AI RMF 1.0 (Map.Trust-1) | Ethical Governance          | 3.11 bias detection             |
-| DE.AE-1 (Anomalies detected) | W3C trace context + anomaly alerts (§4.6)  |
-
-### 6.3 ISO/IEC 27002:2022 Mapping
-
-| Control    | MVCS Implementation              |
-|------------|----------------------------------|
-| 8.15 (Least privilege) | Narrow token scopes          |
-| 8.28 (Secure coding)   | CI red-team prompt tests     |
-| 5.22 (Logging)         | Structured logs, Merkle-root integrity |
-| 8.24 (Use of cryptography) | COSE_Sign1 or detached JWS coverage |
-| 5.26 (Response to information security incidents) | CACAO playbooks |
-| 5.17 (Authentication information) | OAuth token exchange, ID-1 to ID-10 |
-| 8.9 (Configuration management) | SLSA provenance + admission control (§4.4) |
-
-### 6.4 EU AI Act Mapping
-
-| Article/Requirement | MVCS Control                     |
-|---------------------|----------------------------------|
-| Art. 9 (Risk Management) | Risk scoring in Section 3    |
-| Art. 28 (GPAI Obligations) | 3.11 governance, Code of Practice |
-| Art. 52 (Systemic Risks) | 3.2 supply-chain, guidelines (18 Jul 2025) |
-
----
-
-## 7 Deployment Considerations
+## 6 Deployment Considerations
 
 NLIP can be deployed in environments where data is not publicly accessible. This allows for agents to provide value from knowledge gained from proprietary business-critical data, without exposing such data (where such exposure may be restricted for legal, regulatory, or commercial purposes). This can be achieved by either deploying a proxy (for a single DMZ), or, for more highly secure environments, indirect routing of the NLIP messages using the AMQP binding, as shown in the diagram.
 
@@ -689,7 +645,7 @@ Other considerations include:
 
 NLIP does not define a backchannel push mechanism (e.g., server-initiated webhooks). Deployments that need push semantics should reuse existing enterprise patterns (e.g., AMQP, WebSockets with mTLS, or cloud pub/sub) under NLIP’s secure message envelope.
 
-### 7.1 Zero-Trust Option
+### 6.1 Zero-Trust Option
 
 To build this into a Zero-Trust environment (useful in IoT or other critical environments) it is possible to reduce the port exposure to zero with the AMQP binding, by ensuring all connectivity is via inbound connections to the DMZ (i.e., have one of them in reverse-connect mode) and then use the indirect routing feature mentioned earlier. This is illustrated in the following diagram.
 
@@ -699,13 +655,13 @@ In this diagram, secure connections are only made outbound from operational syst
 
 ---
 
-## 8  Future Enhancements
+## 7  Future Enhancements
 
 - Further integration and clarification of security controls into the core NLIP specification.
 
 ---
 
-## 9 Glossary
+## 8 Glossary
 
 | Term | Definition |
 |---|---|
@@ -745,7 +701,7 @@ In this diagram, secure connections are only made outbound from operational syst
 
 ---
 
-## 10  Normative References (additions highlighted)
+## 9  Normative References (additions highlighted)
 
 1. NLIP Specification Core – ECMA TC-56 Working Draft 2025-006
 2. Model Context Protocol (MCP) Security Best Practices – MCP-WG-sec-BP-2025-v1.1
@@ -781,11 +737,52 @@ In this diagram, secure connections are only made outbound from operational syst
 
 ---
 
-## Annex A — CACAO Playbooks
+## Annex A — Applicability Taxonomy (informative)
+
+This annex explains how threats relate to NLIP itself versus the broader deployment context and governance.
+
+### A.1 P — NLIP Protocol‑Specific
+**Scope:** Abuses of NLIP message semantics, mandatory exchanges, or envelope/signature use.  
+**Mitigations live in:** NLIP spec text, reference profiles, conformance tests.  
+**Examples (future work):** Submessage token echo misuse; signature downgrade on NLIP envelopes; control/redirect field abuse.  
+**Typical owners:** TC‑56 editors, AppSec for protocol validation, implementers for conformance.  
+**NLIP ties:** Clarify field semantics; require signature/verification rules; negative tests in conformance suite.
+
+### A.2 PA — NLIP Protocol‑Adjacent
+**Scope:** Risks realized through NLIP usage patterns (e.g., token forwarding across agent chains, session handling), but not unique to NLIP.  
+**Mitigations live in:** §4.1 (identity), §4.2 (transport), implementation guidance, deployment patterns.  
+**Examples:** Confused‑deputy, session hijack, conversation‑token handling.  
+**Typical owners:** AppSec, platform teams.  
+**NLIP ties:** Strong guidance on token exchange, audience/azp checks, sender‑constrained tokens, conversation‑token handling.
+
+### A.3 AS — Agentic‑System
+**Scope:** Threats inherent to LLM/agent behavior and orchestration regardless of transport.  
+**Mitigations live in:** §4.3 runtime controls (semantic firewall, schema checks, recursion limits), testing and guardrails.  
+**Examples:** Prompt injection, MINJA, model extraction, CoT leakage, hallucination, malicious reply, human factors.  
+**Typical owners:** AppSec, ML Eng, product teams.  
+**NLIP ties:** Message labeling, signed responses, reference monitor patterns (Annex C.3) to enforce schemas and I/O policies.
+
+### A.4 DI — Deployment/Infrastructure
+**Scope:** Platform, network, storage, tenancy, and cost/rate limiting.  
+**Mitigations live in:** §4.4 secure CI/CD, §4.5 attestation, §4.6 observability & cost, §7 deployment.  
+**Examples:** Supply‑chain poisoning, inference flooding, data‑at‑rest exposure, multi‑tenancy.  
+**Typical owners:** SRE, platform/security operations.  
+**NLIP ties:** Telemetry propagation (Trace‑ID), cost metrics and policy hooks carried in NLIP messages.
+
+### A.5 GR — Governance/Regulatory
+**Scope:** Legal/regulatory duties (privacy, residency, breach notification, AI governance).  
+**Mitigations live in:** §4.6 retention/logging; §7 residency and zero‑trust deployment; Annex D mappings (GDPR/CCPA/HIPAA/EU AI Act).  
+**Examples:** Data governance & privacy.  
+**Typical owners:** Compliance, data governance, legal.  
+**NLIP ties:** No spec change; ensure NLIP deployments expose sufficient audit/trace context and support policy enforcement endpoints.
+
+---
+
+## Annex B — CACAO Playbooks
 
 This annex contains CACAO (Collaborative Automated Course of Action Operations) playbooks for common threats. Each is expressed in JSON format for machine-readable import into SOAR or orchestration tools. Playbooks PI-001, SCP-002, DoS-003, and INV-004 correspond to incident response hooks described in section 4.7.
 
-### A.1 PI-001 Prompt-Injection Containment
+### B.1 PI-001 Prompt-Injection Containment
 
 ```json
 {
@@ -851,7 +848,7 @@ This annex contains CACAO (Collaborative Automated Course of Action Operations) 
 }
 ```
 
-### A.2 SCP-002 — Supply-Chain Compromise
+### B.2 SCP-002 — Supply-Chain Compromise
 
 ```JSON
 {
@@ -945,7 +942,7 @@ This annex contains CACAO (Collaborative Automated Course of Action Operations) 
 }
 ```
 
-### A.3 DoS-003 — Denial of Service / Cost Amplification
+### B.3 DoS-003 — Denial of Service / Cost Amplification
 
 ```JSON
 {
@@ -1031,7 +1028,7 @@ This annex contains CACAO (Collaborative Automated Course of Action Operations) 
 }
 ```
 
-### A.4 INV-004 — Credential Inversion / Misuse
+### B.4 INV-004 — Credential Inversion / Misuse
 
 ```JSON
 {
@@ -1118,13 +1115,13 @@ This annex contains CACAO (Collaborative Automated Course of Action Operations) 
 
 ---
 
-## Annex B — Implementation Checklist (Informative)
+## Annex C — Implementation Checklist (Informative)
 
 This annex provides a structured checklist to operationalize the Minimal Viable Control Set (MVCS) and related security measures and is the authoritative checklist format. Section 5 summarizes this annex for executive use.
 
 ---
 
-## How to Use
+### C.1 How to Use
 
 - **By Role:** Filter checklist items by your role (AppSec, SRE, ML Eng, Compliance).  
 - **By Threat:** Map controls back to threat IDs in §3.  
@@ -1133,7 +1130,7 @@ This annex provides a structured checklist to operationalize the Minimal Viable 
 
 ---
 
-## Checklist Format
+### C.2 Checklist Format
 
 Each item follows this structure:
 
@@ -1151,7 +1148,7 @@ Each item follows this structure:
 
 ---
 
-## Identity & Authentication (§4.1)
+### C.3 Identity & Authentication (§4.1)
 
 - **Control ID:** ID-1  
   **Title:** Enforce PKCE (S256) on all OAuth authorization flows  
@@ -1275,7 +1272,7 @@ Each item follows this structure:
 
 ---
 
-## Transport & Message Integrity (§4.2)
+### C.4 Transport & Message Integrity (§4.2)
 
 - **Control ID:** TR-1  
   **Title:** TLS 1.3 with pinned ciphers; COSE/JWS signatures  
@@ -1291,7 +1288,7 @@ Each item follows this structure:
 
 ---
 
-## Runtime & Behavior Controls (§4.3)
+### C.5 Runtime & Behavior Controls (§4.3)
 
 - **Control ID:** RT-1  
   **Title:** Semantic firewall + jailbreak CI tests  
@@ -1355,7 +1352,7 @@ Each item follows this structure:
 
 ---
 
-## Supply Chain & CI/CD (§4.4)
+### C.6 Supply Chain & CI/CD (§4.4)
 
 - **Control ID:** CI-1  
   **Title:** SBOM generation + signature enforcement in CI/CD  
@@ -1371,7 +1368,7 @@ Each item follows this structure:
 
 ---
 
-## Remote Attestation (§4.5)
+### C.7 Remote Attestation (§4.5)
 
 - **Control ID:** AT-1  
   **Title:** TPM quote on boot signed by enterprise CA  
@@ -1399,7 +1396,7 @@ Each item follows this structure:
 
 ---
 
-## Observability, Cost & Audit (§4.6)
+### C.8 Observability, Cost & Audit (§4.6)
 
 - **Control ID:** OBS-1  
   **Title:** NLIP-Trace-ID propagated end-to-end  
@@ -1427,7 +1424,7 @@ Each item follows this structure:
 
 ---
 
-## Incident Response (§4.7)
+### C.9 Incident Response (§4.7)
 
 - **Control ID:** IR-1  
   **Title:** CACAO playbooks imported (PI-001, SCP-002, DoS-003, INV-004)  
@@ -1443,7 +1440,7 @@ Each item follows this structure:
 
 ---
 
-## AI Agent Lifecycle Management (§4.8)
+### C.10 AI Agent Lifecycle Management (§4.8)
 
 - **Control ID:** LC-1  
   **Title:** Secure decommissioning (data wipe, key revocation)  
@@ -1474,9 +1471,9 @@ Each item follows this structure:
 
 ---
 
-## Annex C — Reference Architectures
+## Annex D — Reference Architectures
 
-### C.1 Layered Trust Boundaries in NLIP Traffic Flow
+### D.1 Layered Trust Boundaries in NLIP Traffic Flow
 
 ```mermaid
 flowchart LR
@@ -1517,7 +1514,7 @@ This layered design enables strict enforcement of trust boundaries, replay prote
 
 Reminder: NLIP supports HTTPS/TLS as baseline transport, with mutual-TLS (mTLS) as an enterprise-grade enhancement. mTLS SHOULD be used when appropriate (e.g., service-to-service, sensitive multi-tenant workloads). 
 
-### C.2 Multi-Cloud Secure Deployment Architecture for NLIP
+### D.2 Multi-Cloud Secure Deployment Architecture for NLIP
 
 ```mermaid
 flowchart LR
@@ -1594,7 +1591,7 @@ To support **multi-cloud deployments** (e.g., AWS + Azure), implement:
 
 to mitigate control-plane concentration risk and enforce org-wide guardrails across providers.
 
-### C.3 Customizable Control Points for Securing NLIP Agents 
+### D.3 Customizable Control Points for Securing NLIP Agents 
 
 In contrast to MVCS that addresses a baseline set of essential controls, deployments of agents that adopt NLIP can benefit from a security-enhanced architecture that supports customized, pluggable controls. 
 
@@ -1660,7 +1657,7 @@ A circle means that the threat can be defeated in the RM.
 
 ---
 
-## Annex D — Compliance Mapping
+## Annex E — Compliance Mapping
 
 | Standard / Reg                           | Showstopper gaps?                                                                       |
 | ---------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -1672,44 +1669,47 @@ A circle means that the threat can be defeated in the RM.
 
 ---
 
-## Annex E — Applicability Taxonomy (informative)
+## Annex F  Framework Mapping
 
-This annex explains how threats relate to NLIP itself versus the broader deployment context and governance.
+### F.1 MITRE ATLAS Mapping (excerpt)
 
-### E.1 P — NLIP Protocol‑Specific
-**Scope:** Abuses of NLIP message semantics, mandatory exchanges, or envelope/signature use.  
-**Mitigations live in:** NLIP spec text, reference profiles, conformance tests.  
-**Examples (future work):** Submessage token echo misuse; signature downgrade on NLIP envelopes; control/redirect field abuse.  
-**Typical owners:** TC‑56 editors, AppSec for protocol validation, implementers for conformance.  
-**NLIP ties:** Clarify field semantics; require signature/verification rules; negative tests in conformance suite.
+| Threat ID       | NLIP Threat             | MVCS Control                          |
+|-----------------|-------------------------|---------------------------------------|
+| AML.T0059       | Prompt Injection        | 3.1 semantic firewall, tool allow-list |
+| AML.T0011       | Supply-Chain Poisoning  | 3.2 SBOM, signature, hermetic builds  |
+| AML.T0023       | Model Extraction        | 3.7 rate-limit, perturbation, watermark |
+| AML.T0058       | Advanced Adversarial    | 3.13 robustness testing               |
 
-### E.2 PA — NLIP Protocol‑Adjacent
-**Scope:** Risks realized through NLIP usage patterns (e.g., token forwarding across agent chains, session handling), but not unique to NLIP.  
-**Mitigations live in:** §4.1 (identity), §4.2 (transport), implementation guidance, deployment patterns.  
-**Examples:** Confused‑deputy, session hijack, conversation‑token handling.  
-**Typical owners:** AppSec, platform teams.  
-**NLIP ties:** Strong guidance on token exchange, audience/azp checks, sender‑constrained tokens, conversation‑token handling.
+### F.2 NIST CSF 2.0 Mapping
 
-### E.3 AS — Agentic‑System
-**Scope:** Threats inherent to LLM/agent behavior and orchestration regardless of transport.  
-**Mitigations live in:** §4.3 runtime controls (semantic firewall, schema checks, recursion limits), testing and guardrails.  
-**Examples:** Prompt injection, MINJA, model extraction, CoT leakage, hallucination, malicious reply, human factors.  
-**Typical owners:** AppSec, ML Eng, product teams.  
-**NLIP ties:** Message labeling, signed responses, reference monitor patterns (Annex C.3) to enforce schemas and I/O policies.
+| CSF Function.Sub-Category | MVCS Control                    |
+|---------------------------|---------------------------------|
+| ID.AM-1 (Asset inventory) | SBOM, tool manifest             |
+| PR.AC-4 (Access control)  | OAuth 2.1 token exchange, ID-1 to ID-10        |
+| DE.DP-4 (Detect data leak)| Observability and CoT redaction |
+| RS.MI-1 (Mitigation)      | CACAO playbooks                 |
+| NIST AI RMF 1.0 (Map.Trust-1) | Ethical Governance          | 3.11 bias detection             |
+| DE.AE-1 (Anomalies detected) | W3C trace context + anomaly alerts (§4.6)  |
 
-### E.4 DI — Deployment/Infrastructure
-**Scope:** Platform, network, storage, tenancy, and cost/rate limiting.  
-**Mitigations live in:** §4.4 secure CI/CD, §4.5 attestation, §4.6 observability & cost, §7 deployment.  
-**Examples:** Supply‑chain poisoning, inference flooding, data‑at‑rest exposure, multi‑tenancy.  
-**Typical owners:** SRE, platform/security operations.  
-**NLIP ties:** Telemetry propagation (Trace‑ID), cost metrics and policy hooks carried in NLIP messages.
+### F.3 ISO/IEC 27002:2022 Mapping
 
-### E.5 GR — Governance/Regulatory
-**Scope:** Legal/regulatory duties (privacy, residency, breach notification, AI governance).  
-**Mitigations live in:** §4.6 retention/logging; §7 residency and zero‑trust deployment; Annex D mappings (GDPR/CCPA/HIPAA/EU AI Act).  
-**Examples:** Data governance & privacy.  
-**Typical owners:** Compliance, data governance, legal.  
-**NLIP ties:** No spec change; ensure NLIP deployments expose sufficient audit/trace context and support policy enforcement endpoints.
+| Control    | MVCS Implementation              |
+|------------|----------------------------------|
+| 8.15 (Least privilege) | Narrow token scopes          |
+| 8.28 (Secure coding)   | CI red-team prompt tests     |
+| 5.22 (Logging)         | Structured logs, Merkle-root integrity |
+| 8.24 (Use of cryptography) | COSE_Sign1 or detached JWS coverage |
+| 5.26 (Response to information security incidents) | CACAO playbooks |
+| 5.17 (Authentication information) | OAuth token exchange, ID-1 to ID-10 |
+| 8.9 (Configuration management) | SLSA provenance + admission control (§4.4) |
+
+### F.4 EU AI Act Mapping
+
+| Article/Requirement | MVCS Control                     |
+|---------------------|----------------------------------|
+| Art. 9 (Risk Management) | Risk scoring in Section 3    |
+| Art. 28 (GPAI Obligations) | 3.11 governance, Code of Practice |
+| Art. 52 (Systemic Risks) | 3.2 supply-chain, guidelines (18 Jul 2025) |
 
 ---
 
